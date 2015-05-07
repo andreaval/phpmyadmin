@@ -281,7 +281,7 @@ class ImportCsv extends AbstractImportCsv
                 $ch = $this->readCsvTerminatedString(
                     $buffer, $ch, $i, $csv_terminated_len
                 );
-                $i += $csv_terminated_len-1;
+                $i += $csv_terminated_len - 1;
 
             }
             while ($i < $len) {
@@ -311,7 +311,7 @@ class ImportCsv extends AbstractImportCsv
                             $ch = $this->readCsvTerminatedString(
                                 $buffer, $ch, $i, $csv_terminated_len
                             );
-                            $i += $csv_terminated_len-1;
+                            $i += $csv_terminated_len - 1;
                         }
                         continue;
                     }
@@ -329,7 +329,7 @@ class ImportCsv extends AbstractImportCsv
                             $ch = $this->readCsvTerminatedString(
                                 $buffer, $ch, $i, $csv_terminated_len
                             );
-                            $i += $csv_terminated_len-1;
+                            $i += $csv_terminated_len - 1;
                         }
                     } else {
                         $need_end = false;
@@ -357,7 +357,7 @@ class ImportCsv extends AbstractImportCsv
                                 $ch = $this->readCsvTerminatedString(
                                     $buffer, $ch, $i, $csv_terminated_len
                                 );
-                                $i += $csv_terminated_len-1;
+                                $i += $csv_terminated_len - 1;
                             }
                             if ($csv_enclosed == $csv_escaped
                                 && ($ch == $csv_terminated
@@ -381,7 +381,7 @@ class ImportCsv extends AbstractImportCsv
                             $ch = $this->readCsvTerminatedString(
                                 $buffer, $ch, $i, $csv_terminated_len
                             );
-                            $i += $csv_terminated_len-1;
+                            $i += $csv_terminated_len - 1;
                         }
                     }
 
@@ -394,7 +394,7 @@ class ImportCsv extends AbstractImportCsv
                         $i = $fallbacki;
                         $ch = mb_substr($buffer, $i, 1);
                         if ($csv_terminated_len > 1 && $ch == $csv_terminated[0]) {
-                            $i += $csv_terminated_len-1;
+                            $i += $csv_terminated_len - 1;
                         }
                         break;
                     }
@@ -408,7 +408,7 @@ class ImportCsv extends AbstractImportCsv
                             if ($csv_terminated_len > 1
                                 && $ch == $csv_terminated[0]
                             ) {
-                                $i += $csv_terminated_len-1;
+                                $i += $csv_terminated_len - 1;
                             }
                             break;
                         } else {
@@ -420,7 +420,7 @@ class ImportCsv extends AbstractImportCsv
                                 $ch = $this->readCsvTerminatedString(
                                     $buffer, $ch, $i, $csv_terminated_len
                                 );
-                                $i += $csv_terminated_len-1;
+                                $i += $csv_terminated_len - 1;
                             }
                         }
                     }
@@ -439,7 +439,7 @@ class ImportCsv extends AbstractImportCsv
                             if ($csv_terminated_len > 1
                                 && $ch == $csv_terminated[0]
                             ) {
-                                $i += $csv_terminated_len-1;
+                                $i += $csv_terminated_len - 1;
                             }
                             break;
                         }
@@ -451,7 +451,7 @@ class ImportCsv extends AbstractImportCsv
                             $ch = $this->readCsvTerminatedString(
                                 $buffer, $ch, $i, $csv_terminated_len
                             );
-                            $i += $csv_terminated_len-1;
+                            $i += $csv_terminated_len - 1;
                         }
                     }
                     // If everything went okay, store value
@@ -578,7 +578,7 @@ class ImportCsv extends AbstractImportCsv
             ) {
                 // Fill out column names
                 for ($i = 0; $i < $max_cols; ++$i) {
-                    $col_names[] = 'COL ' . ($i+1);
+                    $col_names[] = 'COL ' . ($i + 1);
                 }
             }
 
@@ -650,7 +650,6 @@ class ImportCsv extends AbstractImportCsv
      *
      * @return string
      */
-
     public function readCsvTerminatedString($buffer, $ch, $i, $csv_terminated_len)
     {
         for ($j = 0; $j < $csv_terminated_len - 1; $j++) {

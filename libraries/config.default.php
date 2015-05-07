@@ -984,7 +984,7 @@ $cfg['NavigationTreeDefaultTabTable'] = 'tbl_structure.php';
 $cfg['NavigationTreeDefaultTabTable2'] = '';
 
 /**
- * Disables the possibility of database expansion
+ * Enables the possibility of navigation tree expansion
  *
  * @global boolean $cfg['NavigationTreeEnableExpansion']
  */
@@ -1802,6 +1802,13 @@ $cfg['Export']['phparray_structure_or_data'] = 'data';
 $cfg['Export']['json_structure_or_data'] = 'data';
 
 /**
+ * Export functions
+ *
+ * @global string $cfg['Export']['json_pretty_print']
+ */
+$cfg['Export']['json_pretty_print'] = false;
+
+/**
  *
  *
  * @global string $cfg['Export']['sql_structure_or_data']
@@ -1835,6 +1842,13 @@ $cfg['Export']['sql_disable_fk'] = false;
  * @global boolean $cfg['Export']['sql_views_as_tables']
  */
 $cfg['Export']['sql_views_as_tables'] = false;
+
+/**
+ *
+ *
+ * @global boolean $cfg['Export']['sql_metadata']
+ */
+$cfg['Export']['sql_metadata'] = false;
 
 /**
  *
@@ -2369,6 +2383,13 @@ $cfg['Schema']['pdf_with_doc'] = true;
 /**
  *
  *
+ * @global string $cfg['Schema']['pdf_table_order']
+ */
+$cfg['Schema']['pdf_table_order'] = '';
+
+/**
+ *
+ *
  * @global string $cfg['Schema']['dia_show_color']
  */
 $cfg['Schema']['dia_show_color'] = true;
@@ -2875,6 +2896,13 @@ $cfg['SQLQuery']['ShowAsPHP'] = true;
  */
 $cfg['SQLQuery']['Refresh'] = true;
 
+/**
+ * Enables autoComplete for table & column names in SQL queries
+ *
+ * default = 'true'
+ */
+$cfg['EnableAutocompleteForTablesAndColumns'] = true;
+
 
 /*******************************************************************************
  * Web server upload/save/import directories
@@ -3025,5 +3053,12 @@ $cfg['DefaultFunctions'] = array(
  * Max rows retreived for zoom search
  */
 $cfg['maxRowPlotLimit'] = 500;
+
+/**
+ * Show Git revision if applicable
+ *
+ * @global boolean $cfg['ShowGitRevision']
+ */
+$cfg['ShowGitRevision'] = true;
 
 ?>

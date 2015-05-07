@@ -97,7 +97,7 @@ if (! isset($_REQUEST['query'])) {
     if (! empty($_REQUEST['page'])) {
         $display_page = $_REQUEST['page'];
     } else {
-        $display_page = PMA_getFirstPage($_REQUEST['db']);
+        $display_page = PMA_getDefaultPage($_REQUEST['db']);
     }
 }
 if ($display_page != -1) {
@@ -169,5 +169,4 @@ if (isset($_REQUEST['query'])) {
     $response->addHTML(PMA_getQueryDetails());
 }
 
-$response->addHTML(PMA_getCacheImages());
-?>
+$response->addHTML('<div id="PMA_disable_floating_menubar"></div>');

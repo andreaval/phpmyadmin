@@ -110,6 +110,10 @@ var PMA_console = {
                 if(ConsoleEnterExecutes === true) {
                     $('#pma_console_options input[name=enter_executes]').prop('checked', true);
                 }
+                if(tempConfig.darkTheme === true) {
+                    $('#pma_console_options input[name=dark_theme]').prop('checked', true);
+                    $('#pma_console>.content').addClass('console_dark_theme');
+                }
             } else {
                 $('#pma_console_options input[name=current_query]').prop('checked', true);
             }
@@ -171,6 +175,7 @@ var PMA_console = {
                 $('#pma_console_options input[name=start_history]').prop('checked', false);
                 $('#pma_console_options input[name=current_query]').prop('checked', true);
                 $('#pma_console_options input[name=enter_executes]').prop('checked', false);
+                $('#pma_console_options input[name=dark_theme]').prop('checked', false);
                 PMA_console.updateConfig();
             });
 
@@ -184,6 +189,11 @@ var PMA_console = {
                     PMA_console.ajaxCallback(data);
                 } catch (e) {
                     console.log("Invalid JSON!" + e.message);
+                    if(AJAX.xhr.status === 0 && AJAX.xhr.statusText !== 'abort') {
+                        PMA_ajaxShowMessage($('<div />',{class:'error',html:PMA_messages.strRequestFailed+' ( '+AJAX.xhr.statusText+' )'}));
+                        AJAX.active = false;
+                        AJAX.xhr = null;
+                    }
                 }
             });
 
@@ -398,9 +408,16 @@ var PMA_console = {
             alwaysExpand: $('#pma_console_options input[name=always_expand]').prop('checked'),
             startHistory: $('#pma_console_options input[name=start_history]').prop('checked'),
             currentQuery: $('#pma_console_options input[name=current_query]').prop('checked'),
-            enterExecutes: $('#pma_console_options input[name=enter_executes]').prop('checked')
+            enterExecutes: $('#pma_console_options input[name=enter_executes]').prop('checked'),
+            darkTheme: $('#pma_console_options input[name=dark_theme]').prop('checked')
         };
         $.cookie('pma_console_config', JSON.stringify(PMA_console.config));
+        /*Setting the dark theme of the console*/
+        if(PMA_console.config.darkTheme) {
+            $('#pma_console>.content').addClass('console_dark_theme');
+        } else {
+            $('#pma_console>.content').removeClass('console_dark_theme');
+        }
     },
     isSelect: function (queryString) {
         var reg_exp = /^SELECT\s+/i;
@@ -439,6 +456,9 @@ var PMA_consoleResizer = {
      * @return void
      */
     _mousemove: function(event) {
+        if (event.pageY < 35) {
+            event.pageY = 35
+        }
         PMA_consoleResizer._resultHeight = PMA_consoleResizer._height + (PMA_consoleResizer._posY -event.pageY);
         // Content min-height is 32, if adjusting height small than it we'll move it out of the page
         if(PMA_consoleResizer._resultHeight <= 32) {
@@ -889,6 +909,7 @@ var PMA_consoleMessages = {
             if(confirm(PMA_messages.strConsoleDeleteBookmarkConfirm + '\n' + $message.find('.bookmark_label').text())) {
                 $.post('import.php',
                     {token: PMA_commonParams.get('token'),
+                    server: PMA_commonParams.get('server'),
                     action_bookmark: 2,
                     ajax_request: true,
                     id_bookmark: $message.attr('bookmarkid')},
@@ -993,8 +1014,11 @@ var PMA_consoleBookmarks = {
         }
     },
     refresh: function () {
-        $.get('import.php?console_bookmark_refresh=refresh&token=' + PMA_commonParams.get('token'),
-            {'ajax_request': true},
+        $.get('import.php',
+            {ajax_request: true,
+            token: PMA_commonParams.get('token'),
+            server: PMA_commonParams.get('server'),
+            console_bookmark_refresh: 'refresh'},
             function(data) {
                 if(data.console_message_bookmark) {
                     $('#pma_bookmarks .content.bookmark').html(data.console_message_bookmark);
@@ -1031,6 +1055,7 @@ var PMA_consoleBookmarks = {
                 ajax_request: true,
                 console_bookmark_add: 'true',
                 label: $('#pma_bookmarks .card.add [name=label]').val(),
+                server: PMA_commonParams.get('server'),
                 db: $('#pma_bookmarks .card.add [name=targetdb]').val(),
                 bookmark_query: PMA_consoleInput.getText('bookmark'),
                 shared: $('#pma_bookmarks .card.add [name=shared]').prop('checked')},

@@ -1086,53 +1086,29 @@ function PMA_getHtmlForNotAttachedPrivilegesToTableSpecificColumn($row)
            . ($current_grant_value == 'Y' ? 'checked="checked" ' : '')
            . 'title="';
 
-        $html_output .= (isset($GLOBALS[
-                    'strPrivDesc' . /*overload*/mb_substr(
-                        $tmp_current_grant,
-                        0,
-                        (/*overload*/mb_strlen($tmp_current_grant) - 5)
-                    )
-                ] )
-                ? $GLOBALS[
-                    'strPrivDesc' . /*overload*/mb_substr(
-                        $tmp_current_grant,
-                        0,
-                        (/*overload*/mb_strlen($tmp_current_grant) - 5)
-                    )
-                ]
-                : $GLOBALS[
-                    'strPrivDesc' . /*overload*/mb_substr(
-                        $tmp_current_grant,
-                        0,
-                        (/*overload*/mb_strlen($tmp_current_grant) - 5)
-                    ) . 'Tbl'
-                ]
+        $privGlobalName = 'strPrivDesc'
+            . /*overload*/mb_substr(
+                $tmp_current_grant,
+                0,
+                (/*overload*/mb_strlen($tmp_current_grant) - 5)
+            );
+        $html_output .= (isset($GLOBALS[$privGlobalName])
+                ? $GLOBALS[$privGlobalName]
+                : $GLOBALS[$privGlobalName . 'Tbl']
             )
             . '"/>' . "\n";
 
+        $privGlobalName1 = 'strPrivDesc'
+            . /*overload*/mb_substr(
+                $tmp_current_grant,
+                0,
+                - 5
+            );
         $html_output .= '<label for="checkbox_' . $current_grant
             . '"><code><dfn title="'
-            . (isset($GLOBALS[
-                    'strPrivDesc' . /*overload*/mb_substr(
-                        $tmp_current_grant,
-                        0,
-                        -5
-                    )
-                ])
-                ? $GLOBALS[
-                    'strPrivDesc' . /*overload*/mb_substr(
-                        $tmp_current_grant,
-                        0,
-                        -5
-                    )
-                ]
-                : $GLOBALS[
-                    'strPrivDesc' . /*overload*/mb_substr(
-                        $tmp_current_grant,
-                        0,
-                        -5
-                    ) . 'Tbl'
-                ]
+            . (isset($GLOBALS[$privGlobalName1])
+                ? $GLOBALS[$privGlobalName1]
+                : $GLOBALS[$privGlobalName1 . 'Tbl']
             )
             . '">'
             . /*overload*/mb_strtoupper(
@@ -1403,7 +1379,13 @@ function PMA_getHtmlForGlobalPrivTableWithCheckboxes(
     $html_output = '';
     foreach ($privTable as $i => $table) {
         $html_output .= '<fieldset>' . "\n"
-            . '<legend>' . $privTable_names[$i] . '</legend>' . "\n";
+            . '<legend>' . "\n"
+            . '<input type="checkbox" class="sub_checkall_box"'
+            . ' id="checkall_' . $privTable_names[$i] . '_priv"'
+            . ' title="' . __('Check All') . '"/>'
+            . '<label for="checkall_' . $privTable_names[$i] . '_priv">'
+            . $privTable_names[$i] . '</label>' . "\n"
+            . '</legend>' . "\n";
         foreach ($table as $priv) {
             $html_output .= '<div class="item">' . "\n"
                 . '<input type="checkbox" class="checkall"'
@@ -1777,28 +1759,40 @@ function PMA_updatePassword($err_url, $username, $hostname)
 
     // here $nopass could be == 1
     if (empty($message)) {
+        if (PMA_Util::getServerType() == 'MySQL'
+            && PMA_MYSQL_INT_VERSION >= 50706
+        ) {
+            $query_prefix = "ALTER USER '"
+                . PMA_Util::sqlAddSlashes($username)
+                . "'@'" . PMA_Util::sqlAddSlashes($hostname) . "'"
+                . " IDENTIFIED BY '";
 
-        $hashing_function
-            = (! empty($_REQUEST['pw_hash']) && $_REQUEST['pw_hash'] == 'old'
-                ? 'OLD_'
-                : ''
-            )
-            . 'PASSWORD';
+            // in $sql_query which will be displayed, hide the password
+            $sql_query = $query_prefix . "*'";
 
-        // in $sql_query which will be displayed, hide the password
-        $sql_query        = 'SET PASSWORD FOR \''
-            . PMA_Util::sqlAddSlashes($username)
-            . '\'@\'' . PMA_Util::sqlAddSlashes($hostname) . '\' = '
-            . (($_POST['pma_pw'] == '')
-                ? '\'\''
-                : $hashing_function . '(\''
-                . preg_replace('@.@s', '*', $_POST['pma_pw']) . '\')');
+            $local_query = $query_prefix
+                . PMA_Util::sqlAddSlashes($_POST['pma_pw']) . "'";
+        } else {
+            if (! empty($_REQUEST['pw_hash']) && $_REQUEST['pw_hash'] == 'old') {
+                $hashing_function = 'OLD_PASSWORD';
+            } else {
+                $hashing_function = 'PASSWORD';
+            }
 
-        $local_query      = 'SET PASSWORD FOR \''
-            . PMA_Util::sqlAddSlashes($username)
-            . '\'@\'' . PMA_Util::sqlAddSlashes($hostname) . '\' = '
-            . (($_POST['pma_pw'] == '') ? '\'\'' : $hashing_function
-            . '(\'' . PMA_Util::sqlAddSlashes($_POST['pma_pw']) . '\')');
+            $sql_query        = 'SET PASSWORD FOR \''
+                . PMA_Util::sqlAddSlashes($username)
+                . '\'@\'' . PMA_Util::sqlAddSlashes($hostname) . '\' = '
+                . (($_POST['pma_pw'] == '')
+                    ? '\'\''
+                    : $hashing_function . '(\''
+                    . preg_replace('@.@s', '*', $_POST['pma_pw']) . '\')');
+
+            $local_query      = 'SET PASSWORD FOR \''
+                . PMA_Util::sqlAddSlashes($username)
+                . '\'@\'' . PMA_Util::sqlAddSlashes($hostname) . '\' = '
+                . (($_POST['pma_pw'] == '') ? '\'\'' : $hashing_function
+                . '(\'' . PMA_Util::sqlAddSlashes($_POST['pma_pw']) . '\')');
+        }
 
         $GLOBALS['dbi']->tryQuery($local_query)
             or PMA_Util::mysqlDie(
@@ -2293,8 +2287,12 @@ function PMA_getHtmlTableBodyForSpecificDbOrTablePrivs($privMap, $db)
                 . ($odd_row ? 'odd' : 'even') . '">';
 
             $value = htmlspecialchars($current_user . '&amp;#27;' . $current_host);
-            $html_output .= '<td>'
-                . '<input type="checkbox" class="checkall" name="selected_usr[]" '
+            $html_output .= '<td';
+            if ($nbPrivileges > 1) {
+                $html_output .= ' rowspan="' . $nbPrivileges . '"';
+            }
+            $html_output .= '>';
+            $html_output .= '<input type="checkbox" class="checkall" name="selected_usr[]" '
                 . 'id="checkbox_sel_users_' . ($index_checkbox++) . '" '
                 . 'value="' . $value . '" /></td>' . "\n";
 
@@ -4159,12 +4157,18 @@ function PMA_getHtmlForUserOverview($pmaThemeImage, $text_dir)
        . __('Users overview') . "\n"
        . '</h2>' . "\n";
 
+    $password_column = 'Password';
+    if (PMA_Util::getServerType() == 'MySQL'
+        && PMA_MYSQL_INT_VERSION >= 50706
+    ) {
+        $password_column = 'authentication_string';
+    }
     // $sql_query is for the initial-filtered,
     // $sql_query_all is for counting the total no. of users
 
     $sql_query = $sql_query_all = 'SELECT *,' .
-        "       IF(`Password` = _latin1 '', 'N', 'Y') AS 'Password'" .
-        '  FROM `mysql`.`user`';
+        " IF(`" . $password_column . "` = _latin1 '', 'N', 'Y') AS 'Password'" .
+        ' FROM `mysql`.`user`';
 
     $sql_query .= (isset($_REQUEST['initial'])
         ? PMA_rangeOfUsers($_REQUEST['initial'])

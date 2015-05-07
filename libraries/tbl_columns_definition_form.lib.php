@@ -84,7 +84,7 @@ function PMA_getHtmlForTableConfigurations()
         . '</tr>';
 
     $html .= '<tr>'
-        . '<td><input type="text" name="comment" size="40" maxlength="80"'
+        . '<td><input type="text" name="comment" size="40" maxlength="60"'
         . ' value="'
         . (isset($_REQUEST['comment'])
         ? htmlspecialchars($_REQUEST['comment'])
@@ -178,15 +178,15 @@ function PMA_getHtmlForTableNameAndNoOfColumns()
         . '<table id="table_name_col_no">'
         . '<tr class="vmiddle floatleft">'
         . '<td>' . __('Table name')
-        . ':&nbsp;<input type="text" name="table" size="40" maxlength="80"'
+        . ':&nbsp;<input type="text" name="table" size="40" maxlength="64"'
         . ' value="'
         . (isset($_REQUEST['table']) ? htmlspecialchars($_REQUEST['table']) : '')
         . '" class="textfield" autofocus required />'
         . '</td>'
         . '<td>';
     $html .= sprintf(
-        __('Add %s column(s)'), '<input type="text" id="added_fields" '
-        . 'name="added_fields" size="2" value="1" onfocus="this.select'
+        __('Add %s column(s)'), '<input type="number" id="added_fields" '
+        . 'name="added_fields" size="2" value="1" min="1" onfocus="this.select'
         . '()" />'
     );
 
@@ -240,6 +240,30 @@ function PMA_getHtmlForTableFieldDefinitions($header_cells, $content_cells)
 }
 
 /**
+ * Function to get html for the hidden fields containing index creation info
+ *
+ * @param string $index_type the index type
+ *
+ * @return string
+ */
+function PMA_getHtmlForHiddenIndexInfo($index_type)
+{
+    $html = '<input type="hidden" name="' . $index_type . '" value="';
+    if (! empty($_REQUEST[$index_type])) {
+        // happens when an index has been set on a column,
+        // and a column is added to the table creation dialog
+        //
+        // this contains a JSON-encoded string
+        $html .= htmlspecialchars($_REQUEST[$index_type]);
+    } else {
+        $html .= '[]';
+    }
+    $html .= '">';
+
+    return $html;
+}
+
+/**
  * Function to get html for the create table or field add view
  *
  * @param string $action        action
@@ -256,10 +280,11 @@ function PMA_getHtmlForTableCreateOrAddField($action, $form_params, $content_cel
         . ($action == 'tbl_create.php' ? 'create_table' : 'append_fields')
         . '_form ajax lock-page">';
     $html .= PMA_URL_getHiddenInputs($form_params);
-    $html .= '<input type="hidden" name="primary_indexes" value="[]">';
-    $html .= '<input type="hidden" name="unique_indexes" value="[]">';
-    $html .= '<input type="hidden" name="indexes" value="[]">';
-    $html .= '<input type="hidden" name="fulltext_indexes" value="[]">';
+
+    $html .= PMA_getHtmlForHiddenIndexInfo('primary_indexes');
+    $html .= PMA_getHtmlForHiddenIndexInfo('unique_indexes');
+    $html .= PMA_getHtmlForHiddenIndexInfo('indexes');
+    $html .= PMA_getHtmlForHiddenIndexInfo('fulltext_indexes');
 
     if ($action == 'tbl_create.php') {
         $html .= PMA_getHtmlForTableNameAndNoOfColumns();
@@ -284,12 +309,10 @@ function PMA_getHtmlForTableCreateOrAddField($action, $form_params, $content_cel
  * @param bool       $is_backup  whether backup or not
  * @param array|null $columnMeta column meta data
  * @param bool       $mimework   whether mimework or not
- * @param string     $db         current database
- * @param string     $table      current table
  *
  * @return array
  */
-function PMA_getHeaderCells($is_backup, $columnMeta, $mimework, $db, $table)
+function PMA_getHeaderCells($is_backup, $columnMeta, $mimework)
 {
     $header_cells = array();
     $header_cells[] = __('Name');
@@ -333,7 +356,7 @@ function PMA_getHeaderCells($is_backup, $columnMeta, $mimework, $db, $table)
     if ($mimework && $GLOBALS['cfg']['BrowseMIME']) {
         $header_cells[] = __('MIME type');
         $header_link = '<a href="transformation_overview.php'
-            . PMA_URL_getCommon(array('db' => $db, 'table' => $table))
+            . PMA_URL_getCommon()
             . '#%s" title="' . __(
                 'List of available transformations and their options'
             )
@@ -776,10 +799,14 @@ function PMA_getHtmlForTransformation($columnNumber, $ci, $ci_offset,
             $tooltip = PMA_getTransformationDescription(
                 $available_mime[$type . '_file'][$mimekey], false
             );
+            $name = PMA_getTransformationName(
+                $available_mime[$type . '_file'][$mimekey]
+            );
+            $name .= ' (' . $transform . ')';
             $html .= '<option value="'
                 . $available_mime[$type . '_file'][$mimekey] . '" '
                 . $checked . ' title="' . htmlspecialchars($tooltip) . '">'
-                . htmlspecialchars($transform) . '</option>';
+                . htmlspecialchars($name) . '</option>';
         }
     }
 
@@ -941,7 +968,6 @@ function PMA_getHtmlForColumnIndexes($columnNumber, $ci, $ci_offset, $columnMeta
  *
  * @return string
  */
-
 function PMA_getHtmlForIndexTypeOption($columnNumber, $columnMeta, $type, $key)
 {
     $typeToLower = /*overload*/mb_strtolower($type);
@@ -1206,22 +1232,22 @@ function PMA_getHtmlForColumnDefault($columnNumber, $ci, $ci_offset, $type_upper
 /**
  * Function to get html for column attributes
  *
- * @param int        $columnNumber                     column number
- * @param array      $columnMeta                       column meta
- * @param string     $type_upper                       type upper
- * @param int        $length_values_input_size         length values input size
- * @param int        $length                           length
- * @param string     $default_current_timestamp        default current time stamp
- * @param array|null $extracted_columnspec             extracted column spec
- * @param string     $submit_attribute                 submit attribute
- * @param array|null $analyzed_sql                     analyzed sql
- * @param array      $comments_map                     comments map
- * @param array|null $fields_meta                      fields map
- * @param bool       $is_backup                        is backup
- * @param array      $move_columns                     move columns
- * @param array      $cfgRelation                      configuration relation
- * @param array      $available_mime                   available mime
- * @param array      $mime_map                         mime map
+ * @param int        $columnNumber              column number
+ * @param array      $columnMeta                column meta
+ * @param string     $type_upper                type upper
+ * @param int        $length_values_input_size  length values input size
+ * @param int        $length                    length
+ * @param string     $default_current_timestamp default current time stamp
+ * @param array|null $extracted_columnspec      extracted column spec
+ * @param string     $submit_attribute          submit attribute
+ * @param array|null $analyzed_sql              analyzed sql
+ * @param array      $comments_map              comments map
+ * @param array|null $fields_meta               fields map
+ * @param bool       $is_backup                 is backup
+ * @param array      $move_columns              move columns
+ * @param array      $cfgRelation               configuration relation
+ * @param array      $available_mime            available mime
+ * @param array      $mime_map                  mime map
  *
  * @return array
  */

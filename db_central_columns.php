@@ -30,13 +30,13 @@ if (isset($_POST['edit_save']) || isset($_POST['add_new_column'])) {
     $collation = $_POST['collation'];
     if (isset($orig_col_name) && $orig_col_name) {
         echo PMA_updateOneColumn(
-            $db, $orig_col_name, $col_name, $col_type,$col_attribute,
+            $db, $orig_col_name, $col_name, $col_type, $col_attribute,
             $col_length, $col_isNull, $collation, $col_extra, $col_default
         );
         exit;
     } else {
         $tmp_msg = PMA_updateOneColumn(
-            $db, "", $col_name, $col_type,$col_attribute,
+            $db, "", $col_name, $col_type, $col_attribute,
             $col_length, $col_isNull, $collation, $col_extra, $col_default
         );
     }
@@ -130,8 +130,8 @@ $tableheader = PMA_getCentralColumnsTableHeader(
 );
 $response->addHTML($tableheader);
 $result = PMA_getColumnsList($db, $pos, $max_rows);
-$odd_row = false;
-$row_num=0;
+$odd_row = true;
+$row_num = 0;
 foreach ($result as $row) {
     $tableHtmlRow = PMA_getHTMLforCentralColumnsTableRow(
         $row, $odd_row, $row_num, $db
@@ -150,4 +150,3 @@ $message = PMA_Message::success(
 if (isset($tmp_msg) && $tmp_msg !== true) {
     $message = $tmp_msg;
 }
-?>

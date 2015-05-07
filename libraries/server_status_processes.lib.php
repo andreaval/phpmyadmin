@@ -19,13 +19,15 @@ if (! defined('PHPMYADMIN')) {
  */
 function PMA_getHtmlForServerProcesses()
 {
+    $retval = PMA_getHtmlForServerProcesslist();
+
     $notice = PMA_Message::notice(
         __(
             'Note: Enabling the auto refresh here might cause '
             . 'heavy traffic between the web server and the MySQL server.'
         )
     )->getDisplay();
-    $retval  = $notice . '<div class="tabLinks">';
+    $retval .= $notice . '<div class="tabLinks">';
     $retval .= '<label>' . __('Refresh rate') . ': ';
     $retval .= PMA_ServerStatusData::getHtmlForRefreshList(
         'refreshRate',
@@ -37,7 +39,6 @@ function PMA_getHtmlForServerProcesses()
     $retval .= PMA_Util::getImage('play.png') . __('Start auto refresh');
     $retval .= '</a>';
     $retval .= '</div>';
-    $retval .= PMA_getHtmlForServerProcesslist();
     return $retval;
 }
 
@@ -126,16 +127,16 @@ function PMA_getHtmlForServerProcesslist()
         $sql_query = $show_full_sql
             ? 'SHOW FULL PROCESSLIST'
             : 'SHOW PROCESSLIST';
-        if ( (! empty($_REQUEST['order_by_field'])
-                && ! empty($_REQUEST['sort_order']) )
-            || (! empty($_REQUEST['showExecuting']) )
+        if ((! empty($_REQUEST['order_by_field'])
+            && ! empty($_REQUEST['sort_order']))
+            || (! empty($_REQUEST['showExecuting']))
         ) {
             $sql_query = 'SELECT * FROM `INFORMATION_SCHEMA`.`PROCESSLIST` ';
         }
         if (! empty($_REQUEST['showExecuting'])) {
             $sql_query .= ' WHERE state = "executing" ';
         }
-        if (! empty($_REQUEST['order_by_field']) && ! empty($_REQUEST['sort_order']) ) {
+        if (! empty($_REQUEST['order_by_field']) && ! empty($_REQUEST['sort_order'])) {
             $sql_query .= ' ORDER BY '
                 . PMA_Util::backquote($_REQUEST['order_by_field'])
                 . ' ' . $_REQUEST['sort_order'];
@@ -245,10 +246,12 @@ function PMA_getHtmlForProcessListFilter()
     $retval  = '';
     $retval .= '<fieldset id="tableFilter">';
     $retval .= '<legend>' . __('Filters') . '</legend>';
-    $retval .= '<form action="server_status_processes.php?' . PMA_URL_getCommon($url_params) . '">';
+    $retval .= '<form action="server_status_processes.php?'
+        . PMA_URL_getCommon($url_params) . '">';
     $retval .= '<input type="submit" value="' . __('Refresh') . '" />';
     $retval .= '<div class="formelement">';
-    $retval .= '<input' . $showExecuting . ' type="checkbox" name="showExecuting" id="showExecuting" />';
+    $retval .= '<input' . $showExecuting . ' type="checkbox" name="showExecuting"'
+        . ' id="showExecuting" class="autosubmit"/>';
     $retval .= '<label for="showExecuting">';
     $retval .= __('Show only active');
     $retval .= '</label>';
@@ -272,7 +275,7 @@ function PMA_getHtmlForServerProcessItem($process, $odd_row, $show_full_sql)
 {
     // Array keys need to modify due to the way it has used
     // to display column values
-    if ( (! empty($_REQUEST['order_by_field']) && ! empty($_REQUEST['sort_order']) )
+    if ((! empty($_REQUEST['order_by_field']) && ! empty($_REQUEST['sort_order']))
         || (! empty($_REQUEST['showExecuting']))
     ) {
         foreach (array_keys($process) as $key) {

@@ -789,7 +789,7 @@ function PMA_arrayRemove($path, &$array)
             break;
         }
         $depth++;
-        $path[$depth] =& $path[$depth-1][$key];
+        $path[$depth] =& $path[$depth - 1][$key];
     }
     // if element found, remove it
     if ($found) {
@@ -857,12 +857,21 @@ function PMA_isAllowedDomain($url)
         'docs.phpmyadmin.net',
         /* mysql.com domains */
         'dev.mysql.com','bugs.mysql.com',
+        /* drizzle.org domains */
+        'www.drizzle.org',
+        /* mariadb domains */
+        'mariadb.org',
         /* php.net domains */
         'php.net',
         /* Github domains*/
         'github.com','www.github.com',
         /* Following are doubtful ones. */
-        'www.primebase.com','pbxt.blogspot.com'
+        'www.primebase.com',
+        'pbxt.blogspot.com',
+        'www.percona.com',
+        'mysqldatabaseadministration.blogspot.com',
+        'ronaldbradford.com',
+        'xaprb.com',
     );
     if (in_array(/*overload*/mb_strtolower($domain), $domainWhiteList)) {
         return true;

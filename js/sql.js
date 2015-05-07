@@ -8,7 +8,7 @@
  */
 
 var $data_a;
-var prevScrollX = 0, fixedTop;
+var prevScrollX = 0;
 
 /**
  * decode a string URL_encoded
@@ -91,6 +91,7 @@ AJAX.registerTeardown('sql.js', function () {
     $(document).off('stickycolumns', ".sqlqueryresults");
     $("#togglequerybox").unbind('click');
     $(document).off('click', "#button_submit_query");
+    $(document).off('change', '#id_bookmark')
     $("input[name=bookmark_variable]").unbind("keypress");
     $(document).off('submit', "#sqlqueryform.ajax");
     $(document).off('click', "input[name=navig].ajax");
@@ -265,6 +266,31 @@ AJAX.registerOnload('sql.js', function () {
         // import.php about what needs to be done
         $form.find("select[name=id_bookmark]").val("");
         // let normal event propagation happen
+    });
+
+    /**
+     * Event handler to show appropiate number of variable boxes
+     * based on the bookmarked query
+     */
+    $(document).on('change', '#id_bookmark', function (event) {
+
+        var varCount = $(this).find('option:selected').data('varcount');
+        if (typeof varCount == 'undefined') {
+            varCount = 0;
+        }
+
+        var $varDiv = $('#bookmark_variables');
+        $varDiv.empty();
+        for (var i = 1; i <= varCount; i++) {
+            $varDiv.append($('<label for="bookmark_variable_' + i + '">' + PMA_sprintf(PMA_messages.strBookmarkVariable, i) + '</label>'));
+            $varDiv.append($('<input type="text" size="10" name="bookmark_variable[' + i + ']" id="bookmark_variable_' + i + '"></input>'));
+        }
+
+        if (varCount == 0) {
+            $varDiv.parent('.formelement').hide();
+        } else {
+            $varDiv.parent('.formelement').show();
+        }
     });
 
     /**
@@ -570,7 +596,7 @@ AJAX.registerOnload('sql.js', function () {
         var $form = $button.parent('form');
         var submitData = $form.serialize() + '&ajax_request=true&ajax_page_request=true&submit_mult=' + $button.val();
         PMA_ajaxShowMessage();
-        $.get($form.attr('action'), submitData, AJAX.responseHandler);
+        $.post($form.attr('action'), submitData, AJAX.responseHandler);
     });
 }); // end $()
 
@@ -582,7 +608,7 @@ function PMA_changeClassForColumn($this_th, newclass, isAddClass)
 {
     // index 0 is the th containing the big T
     var th_index = $this_th.index();
-    var has_big_t = !$this_th.closest('tr').children(':first').hasClass('column_heading');
+    var has_big_t = $this_th.closest('tr').children(':first').hasClass('column_action');
     // .eq() is zero-based
     if (has_big_t) {
         th_index--;
@@ -771,14 +797,13 @@ function setStickyColumnsPosition($sticky_columns, $table_results, position, top
  * Initialize sticky columns
  */
 function initStickyColumns($table_results) {
-    fixedTop = $('#floating_menubar').height();
     var $sticky_columns = $('<table class="sticky_columns"></table>')
             .insertBefore($table_results)
             .css("position", "fixed")
             .css("z-index", "99")
             .css("width", $table_results.width())
             .css("margin-left", $('#page_content').css("margin-left"))
-            .css("top", fixedTop)
+            .css("top", $('#floating_menubar').height())
             .css("display", "none");
     return $sticky_columns;
 }
@@ -823,10 +848,10 @@ function handleStickyColumns($sticky_columns, $table_results) {
         //for horizontal scrolling
         if(prevScrollX != currentScrollX) {
             prevScrollX = currentScrollX;
-            setStickyColumnsPosition($sticky_columns, $table_results, "absolute", fixedTop + windowOffset - tableStartOffset);
+            setStickyColumnsPosition($sticky_columns, $table_results, "absolute", $('#floating_menubar').height() + windowOffset - tableStartOffset);
         //for vertical scrolling
         } else {
-            setStickyColumnsPosition($sticky_columns, $table_results, "fixed", fixedTop, $("#pma_navigation").width() - currentScrollX, $('#page_content').css("margin-left"));
+            setStickyColumnsPosition($sticky_columns, $table_results, "fixed", $('#floating_menubar').height(), $("#pma_navigation").width() - currentScrollX, $('#page_content').css("margin-left"));
         }
         $sticky_columns.show();
     } else {

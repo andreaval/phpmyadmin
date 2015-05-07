@@ -239,6 +239,14 @@ function PMA_getHtmlForSqlQueryFormInsert(
     }
     $html .= '<input type="button" value="' . __('Get auto-saved query') . '" id="saved"'
         . ' class="button sqlbutton" />';
+
+    // parameter binding
+    $html .= '<div>';
+    $html .= '<input type="checkbox" name="parameterized" id="parameterized" />';
+    $html .= '<label for="parameterized">' . __('Bind parameters') . '</label>';
+    $html .= '<div id="parametersDiv"></div>';
+    $html .= '</div>';
+
     $html .= '</div>' . "\n";
 
     if (count($fields_list)) {
@@ -364,17 +372,13 @@ function PMA_getHtmlForSqlQueryFormBookmark()
     $html .= '<select name="id_bookmark" id="id_bookmark">' . "\n";
     $html .= '<option value="">&nbsp;</option>' . "\n";
     foreach ($bookmark_list as $key => $value) {
-        $html .= '<option value="' . htmlspecialchars($key) . '">'
-            . htmlspecialchars($value) . '</option>' . "\n";
+        $html .= '<option value="' . htmlspecialchars($key) . '"'
+            . ' data-varcount="' . PMA_Bookmark_getVariableCount($value['query'])
+            . '">'
+            . htmlspecialchars($value['label']) . '</option>' . "\n";
     }
     // &nbsp; is required for correct display with styles/line height
     $html .= '</select>&nbsp;' . "\n";
-    $html .= '</div>' . "\n";
-    $html .= '<div class="formelement">' . "\n";
-    $html .= __('Variable');
-    $html .= PMA_Util::showDocu('faq', 'faqbookmark');
-    $html .= '<input type="text" name="bookmark_variable" class="textfield"'
-        . ' size="10" />' . "\n";
     $html .= '</div>' . "\n";
     $html .= '<div class="formelement">' . "\n";
     $html .= '<input type="radio" name="action_bookmark" value="0"'
@@ -391,6 +395,11 @@ function PMA_getHtmlForSqlQueryFormBookmark()
         . '</label>' . "\n";
     $html .= '</div>' . "\n";
     $html .= '<div class="clearfloat"></div>' . "\n";
+    $html .= '<div class="formelement hide">' . "\n";
+    $html .= __('Variables');
+    $html .= PMA_Util::showDocu('faq', 'faqbookmark');
+    $html .= '<div id="bookmark_variables"></div>';
+    $html .= '</div>' . "\n";
     $html .= '</fieldset>' . "\n";
 
     $html .= '<fieldset id="fieldsetBookmarkOptionsFooter" class="tblFooters">';

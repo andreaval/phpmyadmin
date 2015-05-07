@@ -159,16 +159,19 @@ function PMA_getColumnNameInColumnDropSql($sql)
 function PMA_resultSetHasJustOneTable($fields_meta)
 {
     $just_one_table = true;
-    $prev_table = $fields_meta[0]->table;
+    $prev_table = '';
     foreach ($fields_meta as $one_field_meta) {
-        if (! empty($one_field_meta->table)
+        if ($one_field_meta->table != ''
+            && $prev_table != ''
             && $one_field_meta->table != $prev_table
         ) {
             $just_one_table = false;
-            break;
+        }
+        if ($one_field_meta->table != '') {
+            $prev_table = $one_field_meta->table;
         }
     }
-    return $just_one_table;
+    return $just_one_table && $prev_table != '';
 }
 
 /**
@@ -270,11 +273,11 @@ function PMA_getHtmlForPrintViewHeader($db, $sql_query, $num_rows)
     if (isset($_REQUEST['printview']) && $_REQUEST['printview'] == '1') {
         PMA_Util::checkParameters(array('db', 'sql_query'));
         $header->enablePrintView();
-        if ( $GLOBALS['cfg']['Server']['verbose']) {
+        if ($GLOBALS['cfg']['Server']['verbose']) {
             $hostname =  $GLOBALS['cfg']['Server']['verbose'];
         } else {
             $hostname =  $GLOBALS['cfg']['Server']['host'];
-            if (! empty( $GLOBALS['cfg']['Server']['port'])) {
+            if (! empty($GLOBALS['cfg']['Server']['port'])) {
                 $hostname .=  $GLOBALS['cfg']['Server']['port'];
             }
         }
@@ -417,7 +420,7 @@ function PMA_analyzeAndGetTableHtmlForProfilingResults(
     foreach ($profiling_results as $one_result) {
         if (isset($profiling_stats['states'][ucwords($one_result['Status'])])) {
             $states = $profiling_stats['states'];
-            $states[ucwords($one_result['Status'])]['time']
+            $states[ucwords($one_result['Status'])]['total_time']
                 += $one_result['Duration'];
             $states[ucwords($one_result['Status'])]['calls']++;
         } else {
@@ -1084,7 +1087,7 @@ function PMA_storeTheQueryAsBookmark($db, $bkm_user, $sql_query_for_bookmark,
     if (isset($bkm_replace)) {
         $bookmarks = PMA_Bookmark_getList($db);
         foreach ($bookmarks as $key => $val) {
-            if ($val == $bkm_label) {
+            if ($val['label'] == $bkm_label) {
                 PMA_Bookmark_delete($key);
             }
         }
@@ -1103,6 +1106,9 @@ function PMA_storeTheQueryAsBookmark($db, $bkm_user, $sql_query_for_bookmark,
  */
 function PMA_executeQueryAndStoreResults($full_sql_query)
 {
+    // close session in case the query takes too long
+    session_write_close();
+
     // Measure query time.
     $querytime_before = array_sum(explode(' ', microtime()));
 
@@ -1110,6 +1116,9 @@ function PMA_executeQueryAndStoreResults($full_sql_query)
         $full_sql_query, null, PMA_DatabaseInterface::QUERY_STORE
     );
     $querytime_after = array_sum(explode(' ', microtime()));
+
+    // reopen session
+    session_start();
 
     $GLOBALS['querytime'] = $querytime_after - $querytime_before;
 
@@ -1121,15 +1130,14 @@ function PMA_executeQueryAndStoreResults($full_sql_query)
  *
  * @param boolean $is_affected whether the query affected a table
  * @param mixed   $result      results of executing the query
- * @param int     $num_rows    number of rows affected or changed
  *
  * @return int    $num_rows    number of rows affected or changed
  */
-function PMA_getNumberOfRowsAffectedOrChanged($is_affected, $result, $num_rows)
+function PMA_getNumberOfRowsAffectedOrChanged($is_affected, $result)
 {
     if (! $is_affected) {
         $num_rows = ($result) ? @$GLOBALS['dbi']->numRows($result) : 0;
-    } elseif (! isset($num_rows)) {
+    } else {
         $num_rows = @$GLOBALS['dbi']->affectedRows();
     }
 
@@ -1375,8 +1383,7 @@ function PMA_executeTheQuery($analyzed_sql_results, $full_sql_query, $is_gotofil
         // (This must be done immediately after the query because
         // mysql_affected_rows() reports about the last query done)
         $num_rows = PMA_getNumberOfRowsAffectedOrChanged(
-            $analyzed_sql_results['is_affected'], $result,
-            isset($num_rows) ? $num_rows : null
+            $analyzed_sql_results['is_affected'], $result
         );
 
         // Grabs the profiling results
@@ -1607,15 +1614,19 @@ function PMA_sendResponseForGridEdit($result)
 /**
  * Function to get html for the sql query results div
  *
- * @param string $previous_update_query_html html for the previously executed query
- * @param string $profiling_chart_html       html for profiling
- * @param object $missing_unique_column_msg  message for the missing unique column
- * @param object $bookmark_created_msg       message for bookmark creation
- * @param string $table_html                 html for the table for displaying sql
- *                                           results
- * @param string $indexes_problems_html      html for displaying errors in indexes
- * @param string $bookmark_support_html      html for displaying bookmark form
- * @param string $print_button_html          html for the print button in printview
+ * @param string      $previous_update_query_html html for the previously
+ *                                                executed query
+ * @param string      $profiling_chart_html       html for profiling
+ * @param PMA_Message $missing_unique_column_msg  message for the missing
+ *                                                unique column
+ * @param PMA_Message $bookmark_created_msg       message for bookmark creation
+ * @param string      $table_html                 html for the table for
+ *                                                displaying sql results
+ * @param string      $indexes_problems_html      html for displaying errors
+ *                                                in indexes
+ * @param string      $bookmark_support_html      html for displaying bookmark form
+ * @param string      $print_button_html          html for the print button
+ *                                                in printview
  *
  * @return string $html_output
  */
@@ -1974,7 +1985,7 @@ function PMA_getQueryResponseForResultsReturned($result,
         );
 
     }
-    if ( isset($_REQUEST['printview']) && $_REQUEST['printview'] == '1') {
+    if (isset($_REQUEST['printview']) && $_REQUEST['printview'] == '1') {
         $displayParts = array(
             'edit_lnk' => $displayResultsObject::NO_EDIT_OR_DELETE,
             'del_lnk' => $displayResultsObject::NO_EDIT_OR_DELETE,

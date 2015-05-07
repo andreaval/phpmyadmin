@@ -155,6 +155,12 @@ class ExportSql extends ExportPlugin
             $leaf->setText(__('Export views as tables'));
             $generalOptions->addProperty($leaf);
 
+            // export metadata
+            $leaf = new BoolPropertyItem();
+            $leaf->setName("metadata");
+            $leaf->setText(__('Export metadata'));
+            $generalOptions->addProperty($leaf);
+
             // compatibility maximization
             $compats = $GLOBALS['dbi']->getCompatibilities();
             if (count($compats) > 0) {
@@ -809,6 +815,22 @@ class ExportSql extends ExportPlugin
         if (! PMA_exportOutputHandler($create_query)) {
             return false;
         }
+
+        return $this->_exportUseStatement($db_alias, $compat);
+    }
+
+    /**
+     * Outputs USE statement
+     *
+     * @param string $db     db to use
+     * @param string $compat sql compatibility
+     *
+     * @return bool Whether it succeeded
+     */
+    private function _exportUseStatement($db, $compat)
+    {
+        global $crlf;
+
         if ((isset($GLOBALS['sql_compatibility'])
             && $GLOBALS['sql_compatibility'] == 'NONE')
             || PMA_DRIZZLE
@@ -816,12 +838,12 @@ class ExportSql extends ExportPlugin
             $result = PMA_exportOutputHandler(
                 'USE '
                 . PMA_Util::backquoteCompat(
-                    $db_alias, $compat, isset($GLOBALS['sql_backquotes'])
+                    $db, $compat, isset($GLOBALS['sql_backquotes'])
                 )
                 . ';' . $crlf
             );
         } else {
-            $result = PMA_exportOutputHandler('USE ' . $db_alias . ';' . $crlf);
+            $result = PMA_exportOutputHandler('USE ' . $db . ';' . $crlf);
         }
         return $result;
     }
@@ -926,6 +948,152 @@ class ExportSql extends ExportPlugin
             }
         }
         return $result;
+    }
+
+    /**
+     * Exports metadata from Configuration Storage
+     *
+     * @param string       $db            database being exported
+     * @param string|array $tables        table(s) being exported
+     * @param array        $metadataTypes types of metadata to export
+     * @param array        $targetNames   associative array of db and table names of
+     *                                    target configuraton storage
+     *
+     * @return bool Whether it succeeded
+     */
+    public function exportMetadata(
+        $db, $tables, $metadataTypes, $targetNames = array()
+    ) {
+        $cfgRelation = PMA_getRelationsParam();
+        if (! isset($cfgRelation['db'])) {
+            return true;
+        }
+
+        $comment = $this->_possibleCRLF()
+            . $this->_possibleCRLF()
+            . $this->_exportComment()
+            . $this->_exportComment(__('Metadata'))
+            . $this->_exportComment();
+        if (! PMA_exportOutputHandler($comment)) {
+            return false;
+        }
+
+        if (! $this->_exportUseStatement(
+            $cfgRelation['db'], $GLOBALS['sql_compatibility']
+        )) {
+            return false;
+        }
+
+        if (is_array($tables)) {
+            // export metadata for each table
+            foreach ($tables as $table) {
+                $this->_exportMetadata($db, $table, $metadataTypes);
+            }
+            // export metadata for the database
+            $this->_exportMetadata($db, null, $metadataTypes);
+        } else {
+            // export metadata for single table
+            $this->_exportMetadata($db, $tables, $metadataTypes);
+        }
+    }
+
+    /**
+     * Exports metadata from Configuration Storage
+     *
+     * @param string $db            database being exported
+     * @param string $table         table being exported
+     * @param array  $metadataTypes types of metadata to export
+     * @param array  $targetNames   associative array of db and table names of
+     *                              target configuraton storage
+     *
+     * @return bool Whether it succeeded
+     */
+    private function _exportMetadata(
+        $db, $table, $metadataTypes, $targetNames = array()
+    ) {
+        $cfgRelation = PMA_getRelationsParam();
+
+        if (isset($table)) {
+            $types = array(
+                'column_info' => 'db_name',
+                'table_uiprefs' => 'db_name',
+                'tracking' => 'db_name',
+            );
+        } else {
+            $types = array(
+                'bookmark' => 'dbase',
+                'relation' => 'master_db',
+                //'pdf_pages' => 'db_name',
+                //'table_coords' => 'db_name',
+                'savedsearches' => 'db_name',
+                'central_columns' => 'db_name',
+            );
+        }
+
+        $aliases = array();
+        foreach ($targetNames as $type => $targetName) {
+            if ($type == 'phpmyadmin') {
+                $aliases[$cfgRelation['db']] = $targetName;
+            } else {
+                if (isset($cfgRelation[$type])) {
+                    $aliases[$cfgRelation['db']]['tables'][$cfgRelation[$type]]['alias']
+                        = $targetName;
+                }
+            }
+        }
+
+        $comment = $this->_possibleCRLF()
+            . $this->_exportComment()
+            . $this->_exportComment(
+                sprintf(
+                    __('Metadata for %s'),
+                    isset($table) ? $table : $db
+                )
+            )
+            . $this->_exportComment();
+        if (! PMA_exportOutputHandler($comment)) {
+            return false;
+        }
+
+        foreach ($types as $type => $dbNameColumn) {
+            if (in_array($type, $metadataTypes) && isset($cfgRelation[$type])) {
+
+                // remove auto_incrementing id field for some tables
+                if ($type == 'bookmark') {
+                    $sql_query = "SELECT `dbase`, `user`, `label`, `query` FROM ";
+                } elseif ($type == 'column_info') {
+                    $sql_query = "SELECT `db_name`, `table_name`, `column_name`,"
+                        . " `comment`, `mimetype`, `transformation`,"
+                        . " `transformation_options`, `input_transformation`,"
+                        . " `input_transformation_options` FROM";
+                } elseif ($type == 'savedsearches') {
+                    $sql_query = "SELECT `username`, `db_name`, `search_name`,"
+                        . " `search_data` FROM";
+                } else {
+                    $sql_query = "SELECT * FROM ";
+                }
+                $sql_query .= PMA_Util::backquote($cfgRelation['db'])
+                    . '.' . PMA_Util::backquote($cfgRelation[$type])
+                    . " WHERE " . PMA_Util::backquote($dbNameColumn)
+                    . " = '" . PMA_Util::sqlAddSlashes($db) . "'";
+                if (isset($table)) {
+                    $sql_query .= " AND `table_name` = '"
+                        . PMA_Util::sqlAddSlashes($table) . "'";
+                }
+
+                if (! $this->exportData(
+                    $cfgRelation['db'],
+                    $cfgRelation[$type],
+                    $GLOBALS['crlf'],
+                    '',
+                    $sql_query,
+                    $aliases
+                )) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     /**
@@ -1374,9 +1542,10 @@ class ExportSql extends ExportPlugin
                 // lets find first line with constraints
                 $first_occur = -1;
                 for ($i = 0; $i < $sql_count; $i++) {
+                    $sql_line = current(explode(' COMMENT ', $sql_lines[$i], 2));
                     if (preg_match(
                         '@[\s]+(CONSTRAINT|KEY)@',
-                        $sql_lines[$i]
+                        $sql_line
                     ) && $first_occur == -1) {
                         $first_occur = $i;
                     }

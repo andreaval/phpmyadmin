@@ -495,7 +495,9 @@ if ($token_mismatch) {
         /* Permit redirection with token-mismatch in url.php */
         'url',
         /* Permit session expiry flag */
-        'session_expired'
+        'session_expired',
+        /* JS loading */
+        'scripts', 'call_done'
     );
     /**
      * Allow changing themes in test/theme.php
@@ -578,7 +580,10 @@ $GLOBALS['PMA_Config']->checkPermissions();
 if ($GLOBALS['PMA_Config']->error_config_file) {
     $error = '[strong]' . __('Failed to read configuration file!') . '[/strong]'
         . '[br][br]'
-        . __('This usually means there is a syntax error in it, please check any errors shown below.')
+        . __(
+            'This usually means there is a syntax error in it, '
+            . 'please check any errors shown below.'
+        )
         . '[br][br]'
         . '[conferr]';
     trigger_error($error, E_USER_ERROR);
@@ -639,7 +644,10 @@ if (! isset($cfg['Servers']) || count($cfg['Servers']) == 0) {
         if ($each_server['connect_type'] == 'tcp' && empty($each_server['host'])) {
             trigger_error(
                 sprintf(
-                    __('Invalid hostname for server %1$s. Please review your configuration.'),
+                    __(
+                        'Invalid hostname for server %1$s. '
+                        . 'Please review your configuration.'
+                    ),
                     $server_index
                 ),
                 E_USER_ERROR
@@ -984,13 +992,19 @@ if (! defined('PMA_MINIMUM_COMMON')) {
         // Set timestamp for the session, if required.
         if ($cfg['Server']['SessionTimeZone'] != '') {
             $sql_query_tz = 'SET ' . PMA_Util::backquote('time_zone') . ' = '
-                . '\'' . PMA_Util::sqlAddSlashes($cfg['Server']['SessionTimeZone']) . '\'';
+                . '\''
+                . PMA_Util::sqlAddSlashes($cfg['Server']['SessionTimeZone'])
+                . '\'';
 
-            if(! $userlink->query($sql_query_tz)) {
-                $error_message_tz = sprintf(__('Unable to use timezone %1$s for server %2$d. '
-                    . 'Please check your configuration setting for '
-                    . '[em]$cfg[\'Servers\'][%3$d][\'SessionTimeZone\'][/em]. '
-                    . 'phpMyAdmin is currently using the default time zone of the database server.'),
+            if (! $userlink->query($sql_query_tz)) {
+                $error_message_tz = sprintf(
+                    __(
+                        'Unable to use timezone %1$s for server %2$d. '
+                        . 'Please check your configuration setting for '
+                        . '[em]$cfg[\'Servers\'][%3$d][\'SessionTimeZone\'][/em]. '
+                        . 'phpMyAdmin is currently using the default time zone '
+                        . 'of the database server.'
+                    ),
                     $cfg['Servers'][$GLOBALS['server']]['SessionTimeZone'],
                     $GLOBALS['server'],
                     $GLOBALS['server']
@@ -1082,6 +1096,10 @@ if (! defined('PMA_MINIMUM_COMMON')) {
         // the checkbox was unchecked
         unset($_SESSION['profiling']);
     }
+
+    // load user preferences
+    $GLOBALS['PMA_Config']->loadUserPreferences();
+
     /**
      * Inclusion of profiling scripts is needed on various
      * pages like sql, tbl_sql, db_sql, tbl_select
@@ -1111,10 +1129,10 @@ if (! defined('PMA_MINIMUM_COMMON')) {
         );
         exit;
     }
-} // end if !defined('PMA_MINIMUM_COMMON')
-
-// load user preferences
-$GLOBALS['PMA_Config']->loadUserPreferences();
+} else { // end if !defined('PMA_MINIMUM_COMMON')
+    // load user preferences
+    $GLOBALS['PMA_Config']->loadUserPreferences();
+}
 
 // remove sensitive values from session
 $GLOBALS['PMA_Config']->set('blowfish_secret', '');
@@ -1175,6 +1193,7 @@ if (!empty($__redirect) && in_array($__redirect, $goto_whitelist)) {
 
 // If Zero configuration mode enabled, check PMA tables in current db.
 if (! defined('PMA_MINIMUM_COMMON')
+    && ! empty($GLOBALS['server'])
     && isset($GLOBALS['cfg']['ZeroConf'])
     && $GLOBALS['cfg']['ZeroConf'] == true
 ) {
@@ -1182,6 +1201,14 @@ if (! defined('PMA_MINIMUM_COMMON')
         $cfgRelation = PMA_getRelationsParam();
         if (empty($cfgRelation['db'])) {
             PMA_fixPMATables($GLOBALS['db'], false);
+        }
+    }
+    $cfgRelation = PMA_getRelationsParam();
+    if (empty($cfgRelation['db'])) {
+        foreach ($GLOBALS['pma']->databases as $database) {
+            if ($database == 'phpmyadmin') {
+                PMA_fixPMATables($database, false);
+            }
         }
     }
 }

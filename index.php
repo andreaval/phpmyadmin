@@ -424,7 +424,7 @@ PMA_printListItem(
 PMA_printListItem(
     __('List of changes'),
     'li_pma_changes',
-    PMA_linkURL('changelog.php'),
+    'changelog.php' . PMA_URL_getCommon(),
     null,
     '_blank'
 );
@@ -679,10 +679,10 @@ function PMA_printListItem($name, $listId = null, $url = null,
         if (null !== $target) {
             echo ' target="' . $target . '"';
         }
-        if (null != $a_id) {
+        if (null !== $a_id) {
             echo ' id="' . $a_id . '"';
         }
-        if (null != $a_class) {
+        if (null !== $a_class) {
             echo ' class="' . $a_class . '"';
         }
         echo '>';
@@ -698,4 +698,3 @@ function PMA_printListItem($name, $listId = null, $url = null,
     }
     echo '</li>';
 }
-?>

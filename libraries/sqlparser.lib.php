@@ -849,7 +849,7 @@ function PMA_SQP_parse($sql)
                 $t_suffix = '_reservedWord';
             } elseif (isset($PMA_SQPdata_column_attrib[$d_cur_upper])) {
                 $t_suffix = '_columnAttrib';
-                // INNODB is a MySQL table type, but in "SHOW INNODB STATUS",
+                // INNODB is a MySQL table type, but in "SHOW ENGINE INNODB STATUS",
                 // it should be regarded as a reserved word.
                 if ($d_cur_upper == 'INNODB'
                     && $d_prev_upper == 'SHOW'
@@ -1034,7 +1034,7 @@ function PMA_SQP_analyze($arr)
      * ['queryflags']['is_replace'] = 1;   for the presence of REPLACE
      * ['queryflags']['is_insert'] = 1;    for the presence of INSERT
      * ['queryflags']['is_maint'] = 1;     for the presence of CHECK|ANALYZE
-     *                                     |REPAIR|OPTIMIZE TABLE
+     *                                     |REPAIR|OPTIMIZE|CHECKSUM TABLE
      * ['queryflags']['is_show'] = 1;      for the presence of SHOW
      * ['queryflags']['is_analyse'] = 1;   for the presence of PROCEDURE ANALYSE
      * ['queryflags']['is_export'] = 1;    for the presence of INTO OUTFILE
@@ -1505,10 +1505,10 @@ function PMA_SQP_analyze($arr)
             && ($seen_end_of_table_ref || $i == $size-1)
             && $subresult != $subresult_empty
         ) {
-            for ($tr=0; $tr <= $current_table_ref; $tr++) {
+            for ($tr = 0; $tr <= $current_table_ref; $tr++) {
                 $alias = $subresult['table_ref'][$tr]['table_alias'];
                 $truename = $subresult['table_ref'][$tr]['table_true_name'];
-                for ($se=0; $se <= $current_select_expr; $se++) {
+                for ($se = 0; $se <= $current_select_expr; $se++) {
                     if (isset($alias)
                         && /*overload*/mb_strlen($alias)
                         && $subresult['select_expr'][$se]['table_true_name'] == $alias
@@ -1591,7 +1591,7 @@ function PMA_SQP_analyze($arr)
     //DEBUG
     /*
       if (isset($current_select_expr)) {
-       for ($trace=0; $trace<=$current_select_expr; $trace++) {
+       for ($trace = 0; $trace <= $current_select_expr; $trace++) {
            echo "<br />";
            reset ($subresult['select_expr'][$trace]);
            while (list ($key, $val) = each ($subresult['select_expr'][$trace]))
@@ -1601,7 +1601,7 @@ function PMA_SQP_analyze($arr)
 
       if (isset($current_table_ref)) {
        echo "current_table_ref = " . $current_table_ref . "<br>";
-       for ($trace=0; $trace<=$current_table_ref; $trace++) {
+       for ($trace = 0; $trace <= $current_table_ref; $trace++) {
 
            echo "<br />";
            reset ($subresult['table_ref'][$trace]);
@@ -1709,9 +1709,9 @@ function PMA_SQP_analyze($arr)
                 ) {
                     $subresult['queryflags']['reload'] = 1;
                 }
-                // for the presence of CHECK|ANALYZE|REPAIR|OPTIMIZE TABLE
+                // for the presence of CHECK|ANALYZE|REPAIR|OPTIMIZE|CHECKSUM TABLE
                 $keywords = array(
-                    'CHECK', 'ANALYZE', 'REPAIR', 'OPTIMIZE'
+                    'CHECK', 'ANALYZE', 'REPAIR', 'OPTIMIZE', 'CHECKSUM'
                 );
                 if (in_array($first_reserved_word, $keywords)
                     && $upper_data == 'TABLE'
@@ -1911,7 +1911,7 @@ function PMA_SQP_analyze($arr)
 
         $sep = ' ';
         if ($arr[$i]['type'] == 'alpha_functionName') {
-            $sep='';
+            $sep = '';
             $upper_data = /*overload*/mb_strtoupper($arr[$i]['data']);
             if ($upper_data =='GROUP_CONCAT') {
                 $in_group_concat = true;
@@ -2033,7 +2033,7 @@ function PMA_SQP_analyze($arr)
         }
 
         // clear $upper_data for next iteration
-        $upper_data='';
+        $upper_data = '';
     } // end for $i (loop #2)
     if (empty($section_before_limit)) {
         $section_before_limit = $arr['raw'];
@@ -2160,7 +2160,7 @@ function PMA_SQP_analyze($arr)
                         ) {
                             if ($arr[$i+3]['type'] == 'alpha_reservedWord') {
                                 $value = $third_upper_data . '_'
-                                    . /*overload*/mb_strtoupper($arr[$i+3]['data']);
+                                    . /*overload*/mb_strtoupper($arr[$i + 3]['data']);
                             }
                         } elseif ($third_upper_data == 'CURRENT_TIMESTAMP') {
                             if ($clause == 'on_update'
@@ -2457,7 +2457,7 @@ function PMA_SQP_format(
             $typearr[4] = '';
         }
 
-        for ($j=0; $j<4; $j++) {
+        for ($j = 0; $j < 4; $j++) {
             $typearr[$j] = $typearr[$j + 1];
         }
 

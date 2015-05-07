@@ -72,8 +72,8 @@ class SchemaPdf extends SchemaPlugin
         $leaf->setText(__('Orientation'));
         $leaf->setValues(
             array(
-                'L' => 'Landscape',
-                'P' => 'Portrait',
+                'L' => __('Landscape'),
+                'P' => __('Portrait'),
             )
         );
         $specificOptions->addProperty($leaf);
@@ -92,6 +92,18 @@ class SchemaPdf extends SchemaPlugin
         $leaf = new BoolPropertyItem();
         $leaf->setName('with_doc');
         $leaf->setText(__('Data Dictionary'));
+        $specificOptions->addProperty($leaf);
+
+        $leaf = new SelectPropertyItem();
+        $leaf->setName("table_order");
+        $leaf->setText(__('Order of the tables'));
+        $leaf->setValues(
+            array(
+                '' => __('None'),
+                'name_asc' => __('Name (Ascending)'),
+                'name_desc' => __('Name (Descending)'),
+            )
+        );
         $specificOptions->addProperty($leaf);
 
         // add the main group to the root group

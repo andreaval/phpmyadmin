@@ -68,7 +68,8 @@ $forms['Sql_queries']['Sql_queries'] = array(
     'IgnoreMultiSubmitErrors',
     'MaxCharactersInDisplayedSQL',
     'RetainQueryBox',
-    'CodemirrorEnable');
+    'CodemirrorEnable',
+    'EnableAutocompleteForTablesAndColumns');
 $forms['Sql_queries']['Sql_box'] = array(
     'SQLQuery/Edit',
     'SQLQuery/Explain',
@@ -199,6 +200,7 @@ $forms['Export']['Sql'] = array(
     'Export/sql_use_transaction',
     'Export/sql_disable_fk',
     'Export/sql_views_as_tables',
+    'Export/sql_metadata',
     'Export/sql_compatibility',
     ':group:' . __('Database export options'),
         'Export/sql_drop_database',

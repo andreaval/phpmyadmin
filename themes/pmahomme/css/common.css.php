@@ -531,23 +531,6 @@ fieldset .formelement {
     white-space: nowrap;
 }
 
-@media all and (min-width: 1600px) {
-    fieldset .formelement {
-        clear: none;
-    }
-    #foreign_keys.relationalTable td:first-child + td {
-        width: 25%;
-    }
-    #foreign_keys.relationalTable td:first-child + td select {
-        width: 32%;
-        margin-right: 1%;
-    }
-    #foreign_keys.relationalTable {
-        width: 100%;
-    }
-
-}
-
 /* revert for Gecko */
 fieldset div[class=formelement] {
     white-space: normal;
@@ -1167,7 +1150,7 @@ div#tablestatistics table {
     position: fixed;
     padding: .25em .25em .2em;
     top: 0;
-    z-index: 900;
+    z-index: 99;
     background: #888;
 }
 
@@ -1298,12 +1281,6 @@ div#tablestatistics table {
 h3#serverstatusqueries span {
     font-size: 60%;
     display: inline;
-}
-
-img.sortableIcon {
-    float: <?php echo $right; ?>;
-    background-repeat: no-repeat;
-    margin: 0;
 }
 
 .buttonlinks {
@@ -1650,6 +1627,7 @@ div#sqlquerycontainer {
 div#tablefieldscontainer {
     float: <?php echo $right; ?>;
     width: 29%;
+    margin-top: -20px;
     /* height: 15em; */
 }
 
@@ -2569,9 +2547,8 @@ fieldset .disabled-field td {
 #table_name_col_no {
     position: fixed;
     top: 55px;
-    z-index: 500;
     width: 100%;
-    background: '#ffffff';
+    background: #ffffff;
 }
 
 #table_columns input[type="text"],
@@ -2879,6 +2856,7 @@ fieldset .disabled-field td {
 .cEdit .edit_box {
     overflow: hidden;
     padding: 0;
+    margin: 0;
 }
 
 .cEdit .edit_box_posting {
@@ -3074,6 +3052,26 @@ table.show_create td {
     border-top: solid 1px #aaa;
     background: #fff;
     padding-top: .4em;
+}
+#pma_console .content.console_dark_theme {
+    background: #000;
+    color: #fff;
+}
+#pma_console .content.console_dark_theme .CodeMirror-wrap {
+    background: #000;
+    color: #fff;
+}
+#pma_console .content.console_dark_theme .action_content {
+    color: #000;
+}
+#pma_console .content.console_dark_theme .message {
+    border-color: #373B41;
+}
+#pma_console .content.console_dark_theme .CodeMirror-cursor {
+    border-color: #fff;
+}
+#pma_console .content.console_dark_theme .cm-keyword {
+    color: #de935f;
 }
 #pma_console .message,
 #pma_console .query_input {

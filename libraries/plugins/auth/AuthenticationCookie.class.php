@@ -36,8 +36,8 @@ if (! function_exists('openssl_encrypt')
     || ! function_exists('openssl_random_pseudo_bytes')
     || PHP_VERSION_ID < 50304
 ) {
-    require PHPSECLIB_INC_DIR . '/Crypt/AES.php';
-    require PHPSECLIB_INC_DIR . '/Crypt/Random.php';
+    include PHPSECLIB_INC_DIR . '/Crypt/AES.php';
+    include PHPSECLIB_INC_DIR . '/Crypt/Random.php';
 }
 
 /**
@@ -221,14 +221,14 @@ class AuthenticationCookie extends AuthenticationPlugin
 
         // We already have one correct captcha.
         $skip = false;
-        if (  isset($_SESSION['last_valid_captcha'])
+        if (isset($_SESSION['last_valid_captcha'])
             && $_SESSION['last_valid_captcha']
         ) {
             $skip = true;
         }
 
         // Add captcha input field if reCaptcha is enabled
-        if (  !empty($GLOBALS['cfg']['CaptchaLoginPrivateKey'])
+        if (!empty($GLOBALS['cfg']['CaptchaLoginPrivateKey'])
             && !empty($GLOBALS['cfg']['CaptchaLoginPublicKey'])
             && !$skip
         ) {
@@ -325,14 +325,14 @@ class AuthenticationCookie extends AuthenticationPlugin
 
         // We already have one correct captcha.
         $skip = false;
-        if (  isset($_SESSION['last_valid_captcha'])
+        if (isset($_SESSION['last_valid_captcha'])
             && $_SESSION['last_valid_captcha']
         ) {
             $skip = true;
         }
 
         // Verify Captcha if it is required.
-        if (  !empty($GLOBALS['cfg']['CaptchaLoginPrivateKey'])
+        if (!empty($GLOBALS['cfg']['CaptchaLoginPrivateKey'])
             && !empty($GLOBALS['cfg']['CaptchaLoginPublicKey'])
             && !$skip
         ) {
@@ -442,7 +442,7 @@ class AuthenticationCookie extends AuthenticationPlugin
 
         // check cookies
         if (empty($_COOKIE['pmaUser-' . $GLOBALS['server']])
-            || empty($_COOKIE['pma_iv'])
+            || empty($_COOKIE['pma_iv-' . $GLOBALS['server']])
         ) {
             return false;
         }
@@ -784,7 +784,7 @@ class AuthenticationCookie extends AuthenticationPlugin
     public function cookieDecrypt($encdata, $secret)
     {
         if (is_null($this->_cookie_iv)) {
-            $this->_cookie_iv = base64_decode($_COOKIE['pma_iv'], true);
+            $this->_cookie_iv = base64_decode($_COOKIE['pma_iv-' . $GLOBALS['server']], true);
         }
         if (strlen($this->_cookie_iv) < $this->getIVSize()) {
                 $this->createIV();
@@ -840,7 +840,7 @@ class AuthenticationCookie extends AuthenticationPlugin
             );
         }
         $GLOBALS['PMA_Config']->setCookie(
-            'pma_iv',
+            'pma_iv-' . $GLOBALS['server'],
             base64_encode($this->_cookie_iv)
         );
     }

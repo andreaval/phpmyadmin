@@ -125,10 +125,10 @@ class PMA_DatabaseInterface
     /**
      * Stores query data into session data for debugging purposes
      *
-     * @param string  $query  Query text
-     * @param object  $link   database link
-     * @param object  $result Query result
-     * @param integer $time   Time to execute query
+     * @param string         $query  Query text
+     * @param object         $link   database link
+     * @param object|boolean $result Query result
+     * @param integer        $time   Time to execute query
      *
      * @return void
      */
@@ -551,7 +551,7 @@ class PMA_DatabaseInterface
         // this is why we fall back to SHOW TABLE STATUS even for MySQL >= 50002
         if (empty($tables) && !PMA_DRIZZLE) {
             foreach ($databases as $each_database) {
-                if ($table || (true === $tbl_is_group) || $table_type) {
+                if ($table || (true === $tbl_is_group) || ! empty($table_type)) {
                     $sql = 'SHOW TABLE STATUS FROM '
                         . PMA_Util::backquote($each_database)
                         . ' WHERE';
@@ -564,7 +564,7 @@ class PMA_DatabaseInterface
                             . "%'";
                         $needAnd = true;
                     }
-                    if ($table_type) {
+                    if (! empty($table_type)) {
                         if ($needAnd) {
                             $sql .= " AND";
                         }
@@ -927,7 +927,7 @@ class PMA_DatabaseInterface
             }
 
             // get table information from information_schema
-            if ($database) {
+            if (! empty($database)) {
                 $sql_where_schema = 'WHERE `SCHEMA_NAME` LIKE \''
                     . PMA_Util::sqlAddSlashes($database) . '\'';
             } else {
@@ -958,12 +958,15 @@ class PMA_DatabaseInterface
                         $stats_join";
                 }
                 $sql .= $sql_where_schema . '
-                    GROUP BY s.SCHEMA_NAME
+                    GROUP BY s.SCHEMA_NAME, s.DEFAULT_COLLATION_NAME
                     ORDER BY ' . PMA_Util::backquote($sort_by) . ' ' . $sort_order
                     . $limit;
             } else {
-                $sql = 'SELECT
-                    s.SCHEMA_NAME,
+                $sql  = 'SELECT *,
+                        CAST(BIN_NAME AS CHAR CHARACTER SET utf8) AS SCHEMA_NAME
+                    FROM (';
+                $sql .= 'SELECT
+                    BINARY s.SCHEMA_NAME AS BIN_NAME,
                     s.DEFAULT_COLLATION_NAME';
                 if ($force_stats) {
                     $sql .= ',
@@ -984,7 +987,7 @@ class PMA_DatabaseInterface
                             ON BINARY t.TABLE_SCHEMA = BINARY s.SCHEMA_NAME';
                 }
                 $sql .= $sql_where_schema . '
-                        GROUP BY BINARY s.SCHEMA_NAME
+                        GROUP BY BINARY s.SCHEMA_NAME, s.DEFAULT_COLLATION_NAME
                         ORDER BY ';
                 if ($sort_by == 'SCHEMA_NAME'
                     || $sort_by == 'DEFAULT_COLLATION_NAME'
@@ -994,6 +997,7 @@ class PMA_DatabaseInterface
                 $sql .= PMA_Util::backquote($sort_by)
                     . ' ' . $sort_order
                     . $limit;
+                $sql .= ') a';
             }
 
             $databases = $this->fetchResult($sql, 'SCHEMA_NAME', null, $link);
@@ -1040,27 +1044,29 @@ class PMA_DatabaseInterface
                         . PMA_Util::backquote($database_name) . ';'
                     );
 
-                    while ($row = $this->fetchAssoc($res)) {
-                        $databases[$database_name]['SCHEMA_TABLES']++;
-                        $databases[$database_name]['SCHEMA_TABLE_ROWS']
-                            += $row['Rows'];
-                        $databases[$database_name]['SCHEMA_DATA_LENGTH']
-                            += $row['Data_length'];
-                        $databases[$database_name]['SCHEMA_MAX_DATA_LENGTH']
-                            += $row['Max_data_length'];
-                        $databases[$database_name]['SCHEMA_INDEX_LENGTH']
-                            += $row['Index_length'];
+                    if ($res !== false) {
+                        while ($row = $this->fetchAssoc($res)) {
+                            $databases[$database_name]['SCHEMA_TABLES']++;
+                            $databases[$database_name]['SCHEMA_TABLE_ROWS']
+                                += $row['Rows'];
+                            $databases[$database_name]['SCHEMA_DATA_LENGTH']
+                                += $row['Data_length'];
+                            $databases[$database_name]['SCHEMA_MAX_DATA_LENGTH']
+                                += $row['Max_data_length'];
+                            $databases[$database_name]['SCHEMA_INDEX_LENGTH']
+                                += $row['Index_length'];
 
-                        // for InnoDB, this does not contain the number of
-                        // overhead bytes but the total free space
-                        if ('InnoDB' != $row['Engine']) {
-                            $databases[$database_name]['SCHEMA_DATA_FREE']
-                                += $row['Data_free'];
+                            // for InnoDB, this does not contain the number of
+                            // overhead bytes but the total free space
+                            if ('InnoDB' != $row['Engine']) {
+                                $databases[$database_name]['SCHEMA_DATA_FREE']
+                                    += $row['Data_free'];
+                            }
+                            $databases[$database_name]['SCHEMA_LENGTH']
+                                += $row['Data_length'] + $row['Index_length'];
                         }
-                        $databases[$database_name]['SCHEMA_LENGTH']
-                            += $row['Data_length'] + $row['Index_length'];
+                        $this->freeResult($res);
                     }
-                    $this->freeResult($res);
                     unset($res);
                 }
             }
@@ -1337,7 +1343,7 @@ class PMA_DatabaseInterface
      */
     public function getColumnsSql($database, $table, $column = null, $full = false)
     {
-        if (PMA_DRIZZLE) {
+        if (defined('PMA_DRIZZLE') && PMA_DRIZZLE) {
             // `Key` column:
             // * used in primary key => PRI
             // * unique one-column => UNI
@@ -1382,7 +1388,7 @@ class PMA_DatabaseInterface
                 WHERE table_schema = '" . PMA_Util::sqlAddSlashes($database) . "'
                     AND table_name = '" . PMA_Util::sqlAddSlashes($table) . "'
                     " . (
-                        ($column != null)
+                        (! empty($column))
                             ? "
                     AND column_name = '" . PMA_Util::sqlAddSlashes($column) . "'"
                             : ''
@@ -1391,7 +1397,7 @@ class PMA_DatabaseInterface
         } else {
             $sql = 'SHOW ' . ($full ? 'FULL' : '') . ' COLUMNS FROM '
                 . PMA_Util::backquote($database) . '.' . PMA_Util::backquote($table)
-                . (($column != null) ? "LIKE '"
+                . ((! empty($column)) ? "LIKE '"
                 . PMA_Util::sqlAddSlashes($column, true) . "'" : '');
         }
         return $sql;
@@ -1493,7 +1499,7 @@ class PMA_DatabaseInterface
         // We only need the 'Field' column which contains the table's column names
         $fields = array_keys($this->fetchResult($sql, 'Field', null, $link));
 
-        if ( ! is_array($fields) || count($fields) == 0 ) {
+        if (! is_array($fields) || count($fields) == 0) {
             return null;
         }
         return $fields;
@@ -2812,7 +2818,7 @@ class PMA_DatabaseInterface
      */
     public function getLink($link = null)
     {
-        if ( ! is_null($link) && $link !== false) {
+        if (! is_null($link) && $link !== false) {
             return $link;
         }
 

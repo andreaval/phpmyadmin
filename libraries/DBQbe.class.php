@@ -1199,22 +1199,22 @@ class PMA_DbQbe
             return $candidate_columns;
         }
 
-        $vg = array();
-        $sg = array();
+        $very_good = array();
+        $still_good = array();
         foreach ($candidate_columns as $column => $is_where) {
             $table = explode('.', $column);
             $table = $table[0];
             if ($is_where == 'Y') {
-                $vg[$column] = $table;
+                $very_good[$column] = $table;
             } else {
-                $sg[$column] = $table;
+                $still_good[$column] = $table;
             }
         }
-        if (count($vg) > 0) {
-            $candidate_columns = $vg;
+        if (count($very_good) > 0) {
+            $candidate_columns = $very_good;
             // Candidates restricted in index+where
         } else {
-            $candidate_columns = $sg;
+            $candidate_columns = $still_good;
             // None of the candidates where in a where-clause
         }
 
@@ -1424,7 +1424,7 @@ class PMA_DbQbe
      */
     public function getSelectionForm()
     {
-        $html_output = '<form action="db_qbe.php" method="post" id="formQBE">';
+        $html_output = '<form action="db_qbe.php" method="post" id="formQBE" class="lock-page">';
         $html_output .= '<fieldset>';
 
         if ($GLOBALS['cfgRelation']['savedsearcheswork']) {
@@ -1452,7 +1452,7 @@ class PMA_DbQbe
         // get tables select list
         $html_output .= $this->_getTablesList();
         $html_output .= '</form>';
-        $html_output .= '<form action="db_qbe.php" method="post">';
+        $html_output .= '<form action="db_qbe.php" method="post" class="lock-page">';
         $html_output .= PMA_URL_getHiddenInputs(array('db' => $this->_db));
         // get SQL query
         $html_output .= '<div class="floatleft">';

@@ -164,11 +164,16 @@ foreach ($fields as $row) {
             'b_primary.png', __('Primary')
         );
     }
+    if (in_array($field_name, $columns_with_index)) {
+        $displayed_field_name .= PMA_Util::getImage(
+            'bd_primary.png', __('Index')
+        );
+    }
     $response->addHTML(
         '<tr class="' . ($odd_row ? 'odd': 'even') . '">'
     );
     $odd_row = !$odd_row;
-    $isInCentralColumns = in_array($row['Field'], $central_list)?true:false;
+    $isInCentralColumns = in_array($row['Field'], $central_list) ? true : false;
     $response->addHTML(
         PMA_getHtmlTableStructureRow(
             $row, $rownum, $displayed_field_name,

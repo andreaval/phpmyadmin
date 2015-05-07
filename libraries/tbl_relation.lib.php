@@ -460,10 +460,11 @@ function PMA_getHtmlForForeignKeyRow($one_key, $odd_row, $columns, $i,
         ? $one_key['constraint'] : '';
     $html_output .= '<input type="text" name="constraint_name[' . $i . ']"'
         . ' value="' . htmlspecialchars($constraint_name) . '"'
-        . ' placeholder="' . __('Constraint name') . '" />';
+        . ' placeholder="' . __('Constraint name') . '" maxlength="64" />';
     $html_output .= '</span>' . "\n";
 
-    $html_output .= '<span class="formelement clearfloat">';
+    $html_output .= '<div class="floatleft">';
+    $html_output .= '<span class="formelement">';
     // For ON DELETE and ON UPDATE, the default action
     // is RESTRICT as per MySQL doc; however, a SHOW CREATE TABLE
     // won't display the clause if it's set as RESTRICT.
@@ -477,7 +478,7 @@ function PMA_getHtmlForForeignKeyRow($one_key, $odd_row, $columns, $i,
     );
     $html_output .= '</span>' . "\n";
 
-    $html_output .= '<span class="formelement clearfloat">' . "\n";
+    $html_output .= '<span class="formelement">' . "\n";
     $on_update = isset($one_key['on_update'])
         ? $one_key['on_update'] : 'RESTRICT';
     $html_output .= PMA_generateDropdown(
@@ -487,6 +488,7 @@ function PMA_getHtmlForForeignKeyRow($one_key, $odd_row, $columns, $i,
         $on_update
     );
     $html_output .= '</span>';
+    $html_output .= '</div>';
 
     $column_array = array();
     $column_array[''] = '';

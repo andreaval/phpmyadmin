@@ -741,6 +741,13 @@ class PMA_NavigationTree
                                 $keySeparatorLength
                             )
                         );
+
+                        if ($new_child instanceof Node_Database
+                            && $child->getHiddenCount() > 0
+                        ) {
+                            $new_child->setHiddenCount($child->getHiddenCount());
+                        }
+
                         $new_child->real_name = $child->real_name;
                         $new_child->icon = $child->icon;
                         $new_child->links = $child->links;
@@ -836,7 +843,7 @@ class PMA_NavigationTree
                 $retval .= urlencode($parents[0]->real_name);
                 $retval .= "</span>";
                 if (empty($listContent)) {
-                    $retval .= "<div style='margin:0.75em;font-size:1.2em'>";
+                    $retval .= "<div style='margin:0.75em'>";
                     $retval .= __('No tables found in database.');
                     $retval .= "</div>";
                 }
@@ -1001,7 +1008,11 @@ class PMA_NavigationTree
                 $retval .= $this->_pos;
                 $retval .= "</span>";
                 $retval .= $this->_getPaginationParamsHtml($node);
-                $retval .= $node->getIcon($match);
+                if ($GLOBALS['cfg']['ShowDatabasesNavigationAsTree']
+                    || $parentName != 'root'
+                ) {
+                    $retval .= $node->getIcon($match);
+                }
 
                 $retval .= "</a>";
                 $retval .= "</div>";
@@ -1171,7 +1182,7 @@ class PMA_NavigationTree
             'server' => $GLOBALS['server']
         );
         $retval .= '<div id="pma_navigation_db_select">';
-        $retval .= '<form action="db_structure.php">';
+        $retval .= '<form action="index.php">';
         $retval .= PMA_getHiddenFields($url_params);
         $retval .= '<select name="db" id="navi_db_select">'
             . '<option value="" dir="' . $GLOBALS['text_dir'] . '">'
@@ -1198,11 +1209,20 @@ class PMA_NavigationTree
         }
         $retval .= '</select></form>';
         $retval .= '</div></div>';
-        $retval .= '<div id="pma_navigation_tree_content">';
-        $retval .= '<div style="margin:0.75em;font-size:1.2em">';
-        $retval .= __('Please select a database.');
-        $retval .= '</div>';
-        $retval .= '</div>';
+        $retval .= '<div id="pma_navigation_tree_content"><ul>';
+        $children = $this->_tree->children;
+        usort($children, array('PMA_NavigationTree', 'sortNode'));
+        $this->_setVisibility();
+        for ($i=0, $nbChildren = count($children); $i < $nbChildren; $i++) {
+            if ($i == 0) {
+                $retval .= $this->_renderNode($children[0], true, 'first');
+            } else if ($i + 1 != $nbChildren) {
+                $retval .= $this->_renderNode($children[$i], true);
+            } else {
+                $retval .= $this->_renderNode($children[$i], true, 'last');
+            }
+        }
+        $retval .= '</ul></div>';
         return $retval;
     }
 

@@ -293,7 +293,7 @@ function PMA_getHtmlForIndexForm($fields, $index, $form_params, $add_fields)
         . '</strong>'
         . '</div>'
         . '<input type="text" name="index[Key_name]" id="input_index_name"'
-        . ' size="25"'
+        . ' size="25" maxlength="64"'
         . 'value="' . htmlspecialchars($index->getName()) . '"'
         . 'onfocus="this.select()" />'
         . '</div>';
@@ -323,7 +323,8 @@ function PMA_getHtmlForIndexForm($fields, $index, $form_params, $add_fields)
         . '</strong>'
         . '</div>'
         . '<input type="text" name="index[Key_block_size]" '
-        . 'id="input_key_block_size" size="30" value="" />'
+        . 'id="input_key_block_size" size="30" value="'
+        . htmlspecialchars($index->getKeyBlockSize()) . '" />'
         . '</div>';
 
     $html .= '<div>'
@@ -347,7 +348,7 @@ function PMA_getHtmlForIndexForm($fields, $index, $form_params, $add_fields)
         . '</strong>'
         . '</div>'
         . '<input type="text" name="index[Parser]" '
-        . 'id="input_parse" size="30" value="" />'
+        . 'id="input_parse" size="30" value="' . htmlspecialchars($index->getParser()) . '" />'
         . '</div>';
 
     $html .= '<div>'
@@ -460,7 +461,7 @@ function PMA_getHtmlForIndexForm($fields, $index, $form_params, $add_fields)
     $html .= '<div class="add_more">';
     $btn_value = sprintf(__('Add %s column(s) to index'), 1);
     $html .= '<div class="slider"></div>';
-    $html .= '<div class="add_fields">';
+    $html .= '<div class="add_fields hide">';
     $html .= '<input type="submit" id="add_fields" value="' . $btn_value . '" />';
     $html .= '</div>';
     $html .= '</div>';

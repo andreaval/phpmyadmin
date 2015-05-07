@@ -26,6 +26,15 @@ session_write_close();
 require_once './libraries/js_escape.lib.php';
 require_once './libraries/Util.class.php';
 
+require_once './libraries/OutputBuffering.class.php';
+$buffer = PMA_OutputBuffering::getInstance();
+$buffer->start();
+register_shutdown_function(
+    function () {
+        echo PMA_OutputBuffering::getInstance()->getContents();
+    }
+);
+
 $js_messages['strNoDropDatabases'] = __('"DROP DATABASE" statements are disabled.');
 if ($cfg['AllowUserDropDatabase']) {
     $js_messages['strNoDropDatabases'] = '';
@@ -51,6 +60,7 @@ $js_messages['strConfirmDeleteQBESearch'] = __('Do you really want to delete the
 $js_messages['strConfirmNavigation'] = __('You have unsaved changes; are you sure you want to leave this page?');
 $js_messages['strDropUserWarning'] = __('Do you really want to revoke the selected user(s) ?');
 $js_messages['strDeleteCentralColumnWarning'] = __('Do you really want to delete this central column?');
+$js_messages['strDropRTEitems'] = __('Do you really want to delete the selected items?');
 
 /* For modal dialog buttons */
 $js_messages['strSaveAndClose'] = __('Save & Close');
@@ -258,6 +268,7 @@ $js_messages['strCancel'] = __('Cancel');
 $js_messages['strLoading'] = __('Loading…');
 $js_messages['strAbortedRequest'] = __('Request Aborted!!');
 $js_messages['strProcessingRequest'] = __('Processing Request');
+$js_messages['strRequestFailed'] = __('Request Failed!!');
 $js_messages['strErrorProcessingRequest'] = __('Error in Processing Request');
 $js_messages['strErrorCode'] = __('Error code: %s');
 $js_messages['strErrorText'] = __('Error text: %s');
@@ -288,6 +299,7 @@ $js_messages['strDeleting'] = __('Deleting');
 
 /* For db_routines.js */
 $js_messages['MissingReturn'] = __('The definition of a stored function must contain a RETURN statement!');
+$js_messages['strExport'] = __('Export');
 
 /* For ENUM/SET editor*/
 $js_messages['enum_editor'] = __('ENUM/SET editor');
@@ -306,6 +318,7 @@ $js_messages['strEdit'] = __('Edit');
 $js_messages['strNotValidRowNumber'] = __('%d is not valid row number.');
 $js_messages['strBrowseForeignValues'] = __('Browse foreign values');
 $js_messages['strNoAutoSavedQuery'] = __('No auto-saved query');
+$js_messages['strBookmarkVariable'] = __('Variable %d:');
 
 /* For Central list of columns */
 $js_messages['pickColumn'] = __('Pick');
@@ -416,6 +429,7 @@ $js_messages['strLeavingDesigner'] = __(
 );
 $js_messages['strPageName'] = __('Page name');
 $js_messages['strSavePage'] = __('Save page');
+$js_messages['strSavePageAs'] = __('Save page as');
 $js_messages['strOpenPage'] = __('Open page');
 $js_messages['strDeletePage'] = __('Delete page');
 $js_messages['strUntitled'] = __('Untitled');
@@ -445,6 +459,7 @@ $js_messages['strShowAllCol'] = __('Show all');
 $js_messages['strAlertNonUnique'] = __('This table does not contain a unique column. Features related to the grid edit, checkbox, Edit, Copy and Delete links may not work after saving.');
 $js_messages['strEnterValidHex'] = __('Please enter a valid hexadecimal string. Valid characters are 0-9, A-F.');
 $js_messages['strShowAllRowsWarning'] = __('Do you really want to see all of the rows? For a big table this could crash the browser.');
+$js_messages['strOriginalLength'] = __('Original length');
 
 /** Drag & Drop sql import messages */
 $js_messages['dropImportMessageCancel'] = __('cancel');
@@ -708,3 +723,33 @@ PMA_printJsValue("$.timepicker.regional['']['secondText']", __('Second'));
 ?>
 $.extend($.timepicker._defaults, $.timepicker.regional['']);
 } /* if ($.timepicker) */
+
+<?php
+/* Form validation */
+
+echo "function extendingValidatorMessages() {\n";
+echo "$.extend($.validator.messages, {\n";
+/* Default validation functions */
+PMA_printJsValueForFormValidation('required', __('This field is required'));
+PMA_printJsValueForFormValidation('remote', __('Please fix this field'));
+PMA_printJsValueForFormValidation('email', __('Please enter a valid email address'));
+PMA_printJsValueForFormValidation('url', __('Please enter a valid URL'));
+PMA_printJsValueForFormValidation('date', __('Please enter a valid date'));
+PMA_printJsValueForFormValidation('dateISO', __('Please enter a valid date ( ISO )'));
+PMA_printJsValueForFormValidation('number', __('Please enter a valid number'));
+PMA_printJsValueForFormValidation('creditcard', __('Please enter a valid credit card number'));
+PMA_printJsValueForFormValidation('digits', __('Please enter only digits'));
+PMA_printJsValueForFormValidation('equalTo', __('Please enter the same value again'));
+PMA_printJsValueForFormValidation('maxlength', __('Please enter no more than {0} characters'), true);
+PMA_printJsValueForFormValidation('minlength', __('Please enter at least {0} characters'), true);
+PMA_printJsValueForFormValidation('rangelength', __('Please enter a value between {0} and {1} characters long'), true);
+PMA_printJsValueForFormValidation('range', __('Please enter a value between {0} and {1}'), true);
+PMA_printJsValueForFormValidation('max', __('Please enter a value less than or equal to {0}'), true);
+PMA_printJsValueForFormValidation('min', __('Please enter a value greater than or equal to {0}'), true);
+/* customed functions */
+PMA_printJsValueForFormValidation('validationFunctionForDateTime', __('Please enter a valid date or time'), true);
+PMA_printJsValueForFormValidation('validationFunctionForHex', __('Please enter a valid HEX input'), true);
+PMA_printJsValueForFormValidation('validationFunctionForFuns', __('Error'), true, false);
+echo "\n});";
+echo "\n} /* if ($.validator) */";
+?>

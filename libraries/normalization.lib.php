@@ -79,8 +79,7 @@ function PMA_getHtmlForCreateNewColumn(
     $available_mime = array();
     $mime_map = array();
     $header_cells = PMA_getHeaderCells(
-        true, null,
-        $cfgRelation['mimework'], $db, $table
+        true, null, $cfgRelation['mimework']
     );
     if ($cfgRelation['mimework'] && $GLOBALS['cfg']['BrowseMIME']) {
         $mime_map = PMA_getMIME($db, $table);
@@ -193,8 +192,13 @@ function PMA_getHtmlContentsFor1NFStep2($db, $table)
             . '<a href="#" id="addNewPrimary">'
             . __('+ Add a new primary key column') . '</a>';
     }
-    $res = array('legendText'=>$legendText, 'headText'=>$headText,
-        'subText'=>$subText, 'hasPrimaryKey'=>$hasPrimaryKey, 'extra'=>$extra);
+    $res = array(
+        'legendText' => $legendText,
+        'headText' => $headText,
+        'subText' => $subText,
+        'hasPrimaryKey' => $hasPrimaryKey,
+        'extra' => $extra
+    );
     return $res;
 }
 
@@ -228,9 +232,11 @@ function PMA_getHtmlContentsFor1NFStep4($db, $table)
         . '" onclick="goToFinish1NF();"'
         . '/>';
     $res = array(
-            'legendText'=>$legendText, 'headText'=>$headText,
-            'subText'=>$subText, 'extra'=>$extra
-        );
+        'legendText' => $legendText,
+        'headText' => $headText,
+        'subText' => $subText,
+        'extra' => $extra
+    );
     return $res;
 }
 
@@ -272,9 +278,12 @@ function PMA_getHtmlContentsFor1NFStep3($db, $table)
         $pk[] = $col->getName();
     }
     $res = array(
-            'legendText'=>$legendText, 'headText'=>$headText,
-            'subText'=>$subText, 'extra'=>$extra, 'primary_key'=> json_encode($pk)
-        );
+        'legendText' => $legendText,
+        'headText' => $headText,
+        'subText' => $subText,
+        'extra' => $extra,
+        'primary_key' => json_encode($pk)
+    );
     return $res;
 }
 
@@ -337,7 +346,7 @@ function PMA_getHtmlFor2NFstep1($db, $table)
                 . 'whose values combined together are sufficient'
                 . ' to determine the value of the column.'
             );
-            $cnt=0;
+            $cnt = 0;
             foreach ($columns as $column) {
                 if (!in_array($column, $pk)) {
                     $cnt++;
@@ -360,8 +369,11 @@ function PMA_getHtmlFor2NFstep1($db, $table)
         $extra = '<h3>' . __('Table is already in second normal form.') . '</h3>';
     }
     $res = array(
-        'legendText'=>$legendText, 'headText'=>$headText,
-        'subText'=>$subText,'extra'=>$extra, 'primary_key'=> $key
+        'legendText' => $legendText,
+        'headText' => $headText,
+        'subText' => $subText,
+        'extra' => $extra,
+        'primary_key' => $key
     );
     return $res;
 }
@@ -384,7 +396,7 @@ function PMA_getHtmlForNewTables2NF($partialDependencies,$table)
         ), htmlspecialchars($table)
     ) . '</b></p>';
     $tableName = $table;
-    $i=1;
+    $i = 1;
     foreach ($partialDependencies as $key=>$dependents) {
         $html .= '<p><input type="text" name="' . htmlspecialchars($key)
             . '" value="' . htmlspecialchars($tableName) . '"/>'
@@ -466,8 +478,10 @@ function PMA_createNewTablesFor2NF($partialDependencies, $tablesName, $table, $d
         }
     }
     return array(
-        'legendText'=>__('End of step'), 'headText'=>$headText,
-        'queryError'=>$error, 'extra'=>$message
+        'legendText' => __('End of step'),
+        'headText' => $headText,
+        'queryError' => $error,
+        'extra' => $message
     );
 }
 
@@ -484,7 +498,7 @@ function PMA_createNewTablesFor2NF($partialDependencies, $tablesName, $table, $d
 function PMA_getHtmlForNewTables3NF($dependencies, $tables, $db)
 {
     $html = "";
-    $i=1;
+    $i = 1;
     $newTables = array();
     foreach ($tables as $table=>$arrDependson) {
         if (count(array_unique($arrDependson)) == 1) {
@@ -528,7 +542,7 @@ function PMA_getHtmlForNewTables3NF($dependencies, $tables, $db)
             }
         }
     }
-    return array('html'=>$html, 'newTables'=>$newTables);
+    return array('html' => $html, 'newTables' => $newTables);
 }
 
 /**
@@ -609,8 +623,10 @@ function PMA_createNewTablesFor3NF($newTables, $db)
         }
     }
     return array(
-        'legendText'=>__('End of step'), 'headText'=>$headText,
-        'queryError'=>$error, 'extra'=>$message
+        'legendText' => __('End of step'),
+        'headText' => $headText,
+        'queryError' => $error,
+        'extra' => $message
     );
 }
 /**
@@ -672,7 +688,7 @@ function PMA_moveRepeatingGroup(
         }
     }
     return array(
-        'queryError'=>$error, 'message'=>$message
+        'queryError' => $error, 'message' => $message
     );
 }
 
@@ -700,7 +716,7 @@ function PMA_getHtmlFor3NFstep1($db, $tables)
         . 'Note: A column may have no transitive dependency, '
         . 'in that case you don\'t have to select any.'
     );
-    $cnt=0;
+    $cnt = 0;
     foreach ($tables as $key=>$table) {
         $primary = PMA_Index::getPrimary($table, $db);
         $primarycols = $primary->getColumns();
@@ -710,10 +726,10 @@ function PMA_getHtmlFor3NFstep1($db, $tables)
             $pk[] = $col->getName();
         }
         $GLOBALS['dbi']->selectDb($db, $GLOBALS['userlink']);
-            $columns = (array) $GLOBALS['dbi']->getColumnNames(
-                $db, $table, $GLOBALS['userlink']
-            );
-        if (count($columns)-count($pk)<=1) {
+        $columns = (array) $GLOBALS['dbi']->getColumnNames(
+            $db, $table, $GLOBALS['userlink']
+        );
+        if (count($columns) - count($pk) <= 1) {
             continue;
         }
         foreach ($columns as $column) {
@@ -747,8 +763,10 @@ function PMA_getHtmlFor3NFstep1($db, $tables)
         $extra = "<h3>" . __("Table is already in Third normal form!") . "</h3>";
     }
     $res = array(
-        'legendText'=>$legendText, 'headText'=>$headText,
-        'subText'=>$subText,'extra'=>$extra
+        'legendText' => $legendText,
+        'headText' => $headText,
+        'subText' => $subText,
+        'extra' => $extra
     );
     return $res;
 }

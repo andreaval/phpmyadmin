@@ -170,8 +170,11 @@ require_once 'libraries/Index.class.php';
 // 2. Gets table keys and retains them
 // @todo should be: $server->db($db)->table($table)->primary()
 $primary = PMA_Index::getPrimary($table, $db);
-
-$columns_with_unique_index = PMA_getColumnsWithUniqueIndex($db, $table);
+$columns_with_index = PMA_getColumnsWithIndex(
+    $db, $table,
+    PMA_Index::UNIQUE | PMA_Index::INDEX | PMA_Index::SPATIAL | PMA_Index::FULLTEXT
+);
+$columns_with_unique_index = PMA_getColumnsWithIndex($db, $table, PMA_Index::UNIQUE);
 
 // 3. Get fields
 $fields = (array) $GLOBALS['dbi']->getColumns($db, $table, null, true);
@@ -207,4 +210,3 @@ $hidden_titles = PMA_getHiddenTitlesArray();
 require_once 'libraries/display_structure.inc.php';
 
 $response->addHTML('</div>');
-?>

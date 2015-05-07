@@ -444,7 +444,6 @@ class PMA_Util
     {
         // Fixup for newly used names:
         $link = str_replace('_', '-', /*overload*/mb_strtolower($link));
-        $anchor = str_replace('_', '-', /*overload*/mb_strtolower($anchor));
 
         if (empty($link)) {
             $link = 'index';
@@ -1161,19 +1160,32 @@ class PMA_Util
                 $explain_params = $url_params;
                 if ($is_select) {
                     $explain_params['sql_query'] = 'EXPLAIN ' . $sql_query;
-                    $_message = __('Explain SQL');
+                    $explain_link = ' ['
+                        . self::linkOrButton(
+                            'import.php' . PMA_URL_getCommon($explain_params),
+                            __('Explain SQL')
+                        ) . ']';
                 } elseif (preg_match(
                     '@^EXPLAIN[[:space:]]+SELECT[[:space:]]+@i', $sql_query
                 )) {
                     $explain_params['sql_query']
                         = /*overload*/mb_substr($sql_query, 8);
-                    $_message = __('Skip Explain SQL');
-                }
-                if (isset($explain_params['sql_query']) && isset($_message)) {
                     $explain_link = ' ['
                         . self::linkOrButton(
                             'import.php' . PMA_URL_getCommon($explain_params),
-                            $_message
+                            __('Skip Explain SQL')
+                        ) . ']';
+                    $url = 'https://mariadb.org/explain_analyzer/analyze/'
+                        . '?client=phpMyAdmin&raw_explain='
+                        . urlencode(self::generateRowQueryOutput($sql_query));
+                    $explain_link .= ' ['
+                        . self::linkOrButton(
+                            'url.php?url=' . urlencode($url),
+                            sprintf(__('Analyze Explain at %s'), 'mariadb.org'),
+                            array(),
+                            true,
+                            false,
+                            '_blank'
                         ) . ']';
                 }
             } //show explain
@@ -1291,6 +1303,43 @@ class PMA_Util
 
         return $retval;
     } // end of the 'getMessage()' function
+
+    /**
+     * Execute an EXPLAIN query and formats results similar to MySQL command line utility.
+     *
+     * @param string $sqlQuery EXPLAIN query
+     *
+     * @return string query resuls
+     */
+    private static function generateRowQueryOutput($sqlQuery)
+    {
+        $ret = '';
+        $result = $GLOBALS['dbi']->query($sqlQuery);
+        if ($result) {
+            $devider = '+';
+            $columnNames = '|';
+            $fieldsMeta = $GLOBALS['dbi']->getFieldsMeta($result);
+            foreach ($fieldsMeta as $meta) {
+                $devider .= '---+';
+                $columnNames .= ' ' . $meta->name . ' |';
+            }
+            $devider .= "\n";
+
+            $ret .= $devider . $columnNames . "\n" . $devider;
+            while ($row = $GLOBALS['dbi']->fetchRow($result)) {
+                $values = '|';
+                foreach ($row as $value) {
+                    if (is_null($value)) {
+                        $value = 'NULL';
+                    }
+                    $values .= ' ' . $value . ' |';
+                }
+                $ret .= $values . "\n";
+            }
+            $ret .= $devider;
+        }
+        return $ret;
+    }
 
     /**
      * Verifies if current MySQL server supports profiling
@@ -1499,19 +1548,19 @@ class PMA_Util
 
         // If we don't want any zeros after the comma just add the thousand separator
         if ($noTrailingZero) {
-            $value = self::localizeNumber(
+            $localizedValue = self::localizeNumber(
                 preg_replace('/(?<=\d)(?=(\d{3})+(?!\d))/', ',', $value)
             );
         } else {
             //number_format is not multibyte safe, str_replace is safe
-            $value = self::localizeNumber(number_format($value, $digits_right));
+            $localizedValue = self::localizeNumber(number_format($value, $digits_right));
         }
 
         if ($originalValue != 0 && floatval($value) == 0) {
-            return ' <' . (1 / self::pow(10, $digits_right)) . ' ' . $unit;
+            return ' <' . self::localizeNumber((1 / self::pow(10, $digits_right))) . ' ' . $unit;
         }
 
-        return $sign . $value . ' ' . $unit;
+        return $sign . $localizedValue . ' ' . $unit;
     } // end of the 'formatNumber' function
 
     /**
@@ -1611,7 +1660,14 @@ class PMA_Util
             $date
         );
 
-        return strftime($date, $timestamp);
+        $ret = strftime($date, $timestamp);
+        // Some OSes such as Win8.1 Traditional Chinese version did not produce UTF-8
+        // output here. See https://sourceforge.net/p/phpmyadmin/bugs/4207/
+        if (mb_detect_encoding($ret, 'UTF-8', true) != 'UTF-8') {
+            $ret = date('Y-m-d H:i:s', $timestamp);
+        }
+
+        return $ret;
     } // end of the 'localisedDate()' function
 
     /**
@@ -1855,6 +1911,9 @@ class PMA_Util
             $url_parts   = parse_url($url);
 
             if ($new_form) {
+                if ($target) {
+                    $target = ' target="' . $target . '"';
+                }
                 $ret = '<form action="' . $url_parts['path'] . '" class="link"'
                      . ' method="post"' . $target . ' style="display: inline;">';
                 $subname_open   = '';
@@ -2311,10 +2370,9 @@ class PMA_Util
         $pageNowMinusRange = ($pageNow - $range);
         $pageNowPlusRange = ($pageNow + $range);
 
-        $gotopage = $prompt . ' <select class="pageselector ';
-        $gotopage .= ' ajax';
+        $gotopage = $prompt . ' <select class="pageselector ajax"';
 
-        $gotopage .= '" name="' . $name . '" >';
+        $gotopage .= ' name="' . $name . '" >';
         if ($nbTotalPage < $showAll) {
             $pages = range(1, $nbTotalPage);
         } else {

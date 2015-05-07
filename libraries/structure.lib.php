@@ -322,37 +322,51 @@ function PMA_getHtmlForCheckAllTables($pmaThemeImage, $text_dir,
     if (!$db_is_system_schema
         && !$GLOBALS['cfg']['DisableMultiTableMaintenance']
     ) {
+        $html_output .= '<optgroup label="' . __('Delete data or table') . '">';
         $html_output .= '<option value="empty_tbl" >'
             . __('Empty') . '</option>' . "\n";
         $html_output .= '<option value="drop_tbl" >'
             . __('Drop') . '</option>' . "\n";
+        $html_output .= '</optgroup>';
+
+        $html_output .= '<optgroup label="' . __('Table maintenance') . '">';
+        $html_output .= '<option value="analyze_tbl" >'
+            . __('Analyze table') . '</option>' . "\n";
         $html_output .= '<option value="check_tbl" >'
             . __('Check table') . '</option>' . "\n";
         if (!PMA_DRIZZLE) {
+            $html_output .= '<option value="checksum_tbl" >'
+                . __('Checksum table') . '</option>' . "\n";
             $html_output .= '<option value="optimize_tbl" >'
                 . __('Optimize table') . '</option>' . "\n";
             $html_output .= '<option value="repair_tbl" >'
                 . __('Repair table') . '</option>' . "\n";
         }
-        $html_output .= '<option value="analyze_tbl" >'
-            . __('Analyze table') . '</option>' . "\n";
+        $html_output .= '</optgroup>';
+
+        $html_output .= '<optgroup label="' . __('Prefix') . '">';
         $html_output .= '<option value="add_prefix_tbl" >'
             . __('Add prefix to table') . '</option>' . "\n";
         $html_output .= '<option value="replace_prefix_tbl" >'
             . __('Replace table prefix') . '</option>' . "\n";
         $html_output .= '<option value="copy_tbl_change_prefix" >'
             . __('Copy table with prefix') . '</option>' . "\n";
-        if (isset($GLOBALS['cfgRelation']['central_columnswork'])
-            && $GLOBALS['cfgRelation']['central_columnswork']
-        ) {
-            $html_output .= '<option value="sync_unique_columns_central_list" >'
-                . __('Add columns to central list') . '</option>' . "\n";
-            $html_output .= '<option value="delete_unique_columns_central_list" >'
-                . __('Remove columns from central list') . '</option>' . "\n";
-            $html_output .= '<option value="make_consistent_with_central_list" >'
-                . __('Make consistent with central list') . '</option>' . "\n";
-        }
+        $html_output .= '</optgroup>';
     }
+
+    if (isset($GLOBALS['cfgRelation']['central_columnswork'])
+        && $GLOBALS['cfgRelation']['central_columnswork']
+    ) {
+        $html_output .= '<optgroup label="' . __('Central columns') . '">';
+        $html_output .= '<option value="sync_unique_columns_central_list" >'
+            . __('Add columns to central list') . '</option>' . "\n";
+        $html_output .= '<option value="delete_unique_columns_central_list" >'
+            . __('Remove columns from central list') . '</option>' . "\n";
+        $html_output .= '<option value="make_consistent_with_central_list" >'
+            . __('Make consistent with central list') . '</option>' . "\n";
+        $html_output .= '</optgroup>';
+    }
+
     $html_output .= '</select>'
         . implode("\n", $hidden_fields) . "\n";
     $html_output .= '</div>';
@@ -620,38 +634,25 @@ function PMA_getHtmlForShowStats($tbl_url_query, $formatted_size,
 }
 
 /**
- * Get HTML to show database structure creation, last update and last checkx time
+ * Get HTML to show either a database structure creation, last update or
+ * last check time
  *
- * @param string $create_time create time
- * @param string $update_time last update time
- * @param string $check_time  last check time
+ * @param string $one_time     one of the times to show
+ * @param string $config_param the related configuration parameter
+ * @param string $class        the class to generate
  *
  * @return string $html_output
  */
-function PMA_getHtmlForStructureTimes($create_time, $update_time, $check_time)
+function PMA_getHtmlForStructureTime($one_time, $config_param, $class)
 {
     $html_output = '';
-    if ($GLOBALS['cfg']['ShowDbStructureCreation']) {
-        $html_output .= '<td class="value tbl_creation">'
-            . ($create_time
-                ? PMA_Util::localisedDate(strtotime($create_time))
+    if ($GLOBALS['cfg'][$config_param]) {
+        $html_output .= '<td class="value ' . $class . '">'
+            . ($one_time
+                ? PMA_Util::localisedDate(strtotime($one_time))
                 : '-' )
             . '</td>';
     } // end if
-    if ($GLOBALS['cfg']['ShowDbStructureLastUpdate']) {
-        $html_output .= '<td class="value tbl_last_update">'
-            . ($update_time
-                ? PMA_Util::localisedDate(strtotime($update_time))
-                : '-' )
-            . '</td>';
-    } // end if
-    if ($GLOBALS['cfg']['ShowDbStructureLastCheck']) {
-        $html_output .= '<td class="value tbl_last_check">'
-            . ($check_time
-                ? PMA_Util::localisedDate(strtotime($check_time))
-                : '-' )
-            . '</td>';
-    }
     return $html_output;
 }
 
@@ -752,9 +753,15 @@ function PMA_getHtmlForNotNullEngineViewTable($table_is_view, $current_table,
         );
     }
 
-    $html_output .= PMA_getHtmlForStructureTimes(
-        $create_time, $update_time, $check_time
-    );
+    $html_output .= PMA_getHtmlForStructureTime(
+        $create_time, 'ShowDbStructureCreation', 'tbl_creation'
+    )
+        . PMA_getHtmlForStructureTime(
+            $update_time, 'ShowDbStructureLastUpdate', 'tbl_last_update'
+        )
+        . PMA_getHtmlForStructureTime(
+            $check_time, 'ShowDbStructureLastCheck', 'tbl_last_check'
+        );
 
     return array($html_output, $approx_rows);
 }
@@ -1372,13 +1379,12 @@ function PMA_getHtmlTableStructureRow($row, $rownum,
         . $extracted_columnspec['displayed_type'] . $type_mime
         . '</bdo></td>';
 
-    $html_output .= '<td>' .
-        (empty($field_charset)
-            ? ''
-            : '<dfn title="' . PMA_getCollationDescr($field_charset) . '">'
-                . $field_charset . '</dfn>'
-        )
-        . '</td>';
+    $html_output .= '<td>';
+    if (! empty($field_charset)) {
+        $html_output .= '<dfn title="' . PMA_getCollationDescr($field_charset)
+            . '">' . $field_charset . '</dfn>';
+    }
+    $html_output .= '</td>';
 
     $html_output .= '<td class="column_attribute nowrap">'
         . $attribute . '</td>';
@@ -1704,10 +1710,21 @@ function PMA_getHtmlForAddColumn($columns_list)
             . 'value="first" data-pos = "first">'
             . __('at beginning of table')
             . '</option>';
+    $cols_count = count($columns_list);
     foreach ($columns_list as $one_column_name) {
-        $column_selector .= '<option '
-            . 'value="' . htmlspecialchars($one_column_name) . '">'
-            . sprintf(__('after %s'), htmlspecialchars($one_column_name))
+        //by default select the last column (add column at the end of the table)
+        if (--$cols_count == 0) {
+            $column_selector .= '<option '
+                . 'value="' . htmlspecialchars($one_column_name)
+                . '" selected="selected">';
+        } else {
+            $column_selector .= '<option '
+                . 'value="' . htmlspecialchars($one_column_name) . '">';
+        }
+        $column_selector .= sprintf(
+            __('after %s'),
+            htmlspecialchars($one_column_name)
+        )
             . '</option>';
     }
     $column_selector .= '</select>';
@@ -1865,6 +1882,7 @@ function getHtmlForRowStatsTable($showtable, $tbl_collation,
     }
     if (!$is_innodb
         && isset($showtable['Data_length'])
+        && isset($showtable['Rows'])
         && $showtable['Rows'] > 0
         && $mergetable == false
     ) {
@@ -2089,7 +2107,7 @@ function PMA_getHtmlForActionsInTableStructure($type, $tbl_storage_engine,
     $html_output .= PMA_getHtmlForActionRowInStructureTable(
         $type, $tbl_storage_engine,
         'add_unique unique nowrap',
-        isset($columns_with_unique_index[$field_name]),
+        in_array($field_name, $columns_with_unique_index),
         false, $url_query, $primary, 'ADD UNIQUE',
         __('An index has been added on %s.'),
         'Unique', $titles, $row, false
@@ -2743,26 +2761,24 @@ function PMA_moveColumns($db, $table)
 }
 
 /**
- * Get columns with unique index
+ * Get columns with indexes
  *
  * @param string $db    database name
  * @param string $table tablename
+ * @param int    $types types bitmask
  *
- * @return array $columns_with_unique_index  An array of columns with unique index,
- *                                            with $column name as the array key
+ * @return array an array of columns
  */
-function PMA_getColumnsWithUniqueIndex($db ,$table)
+function PMA_getColumnsWithIndex($db, $table, $types)
 {
-    $columns_with_unique_index = array();
-    foreach (PMA_Index::getFromTable($table, $db) as $index) {
-        if ($index->isUnique() && $index->getChoice() == 'UNIQUE') {
-            $columns = $index->getColumns();
-            foreach ($columns as $column_name => $dummy) {
-                $columns_with_unique_index[$column_name] = 1;
-            }
+    $columns_with_index = array();
+    foreach (PMA_Index::getFromTableByChoice($table, $db, $types) as $index) {
+        $columns = $index->getColumns();
+        foreach ($columns as $column_name => $dummy) {
+            $columns_with_index[$column_name] = 1;
         }
     }
-    return $columns_with_unique_index;
+    return array_keys($columns_with_index);
 }
 
 /**
@@ -3223,6 +3239,8 @@ function PMA_possiblyShowCreateTableDialog($db, $db_is_system_schema, $response)
 
 /**
  * Returns the HTML for secondary levels tabs of the table structure page
+ *
+ * @param string $tbl_storage_engine storage engine of the table
  *
  * @return string HTML for secondary levels tabs
  */

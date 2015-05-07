@@ -123,7 +123,7 @@ function PMA_RTN_parseOneParameter($value)
     $depth = 0;
     $param_length = '';
     $param_opts = array();
-    for ($i=$pos; $i<$parsed_param['len']; $i++) {
+    for ($i = $pos; $i < $parsed_param['len']; $i++) {
         if (($parsed_param[$i]['type'] == 'alpha_columnType'
             || $parsed_param[$i]['type'] == 'alpha_functionName') && $depth == 0
         ) {
@@ -183,7 +183,7 @@ function PMA_RTN_parseAllParameters($parsed_query, $routine_type)
         $params = array();
         $fetching = false;
         $depth = 0;
-        for ($i=0; $i<$parsed_query['len']; $i++) {
+        for ($i = 0; $i < $parsed_query['len']; $i++) {
             if ($parsed_query[$i]['type'] == 'alpha_reservedWord'
                 && $parsed_query[$i]['data'] == $routine_type
             ) {
@@ -249,7 +249,7 @@ function PMA_RTN_parseRoutineDefiner($parsed_query)
 {
     $retval = '';
     $fetching = false;
-    for ($i=0; $i<$parsed_query['len']; $i++) {
+    for ($i = 0; $i < $parsed_query['len']; $i++) {
         if ($parsed_query[$i]['type'] == 'alpha_reservedWord'
             && $parsed_query[$i]['data'] == 'DEFINER'
         ) {
@@ -684,7 +684,7 @@ function PMA_RTN_getDataFromName($name, $type, $all = true)
             // information about the return variable.
             $dtd = '';
             $fetching = false;
-            for ($i=0; $i<$parsed_query['len']; $i++) {
+            for ($i = 0; $i < $parsed_query['len']; $i++) {
                 if ($parsed_query[$i]['type'] == 'alpha_reservedWord'
                     && /*overload*/mb_strtoupper($parsed_query[$i]['data']) == 'RETURNS'
                 ) {
@@ -703,7 +703,7 @@ function PMA_RTN_getDataFromName($name, $type, $all = true)
                         && ($parsed_query[$i+1]['type'] == 'alpha_charset'
                         || $parsed_query[$i+1]['type'] == 'alpha_identifier')
                     ) {
-                        $dtd .= $word . ' ' . $parsed_query[$i+1]['data'];
+                        $dtd .= $word . ' ' . $parsed_query[$i + 1]['data'];
                     }
                     break;
                 } else if ($fetching == true) {
@@ -877,7 +877,7 @@ function PMA_RTN_getEditorForm($mode, $operation, $routine)
     foreach ($need_escape as $key => $index) {
         $routine[$index] = htmlentities($routine[$index], ENT_QUOTES, 'UTF-8');
     }
-    for ($i=0; $i<$routine['item_num_params']; $i++) {
+    for ($i = 0; $i < $routine['item_num_params']; $i++) {
         $routine['item_param_name'][$i]   = htmlentities(
             $routine['item_param_name'][$i],
             ENT_QUOTES
@@ -908,12 +908,12 @@ function PMA_RTN_getEditorForm($mode, $operation, $routine)
         $routine['item_param_opts_text'][] = '';
         $routine['item_num_params']++;
     } else if ($operation == 'remove') {
-        unset($routine['item_param_dir'][$routine['item_num_params']-1]);
-        unset($routine['item_param_name'][$routine['item_num_params']-1]);
-        unset($routine['item_param_type'][$routine['item_num_params']-1]);
-        unset($routine['item_param_length'][$routine['item_num_params']-1]);
-        unset($routine['item_param_opts_num'][$routine['item_num_params']-1]);
-        unset($routine['item_param_opts_text'][$routine['item_num_params']-1]);
+        unset($routine['item_param_dir'][$routine['item_num_params'] - 1]);
+        unset($routine['item_param_name'][$routine['item_num_params'] - 1]);
+        unset($routine['item_param_type'][$routine['item_num_params'] - 1]);
+        unset($routine['item_param_length'][$routine['item_num_params'] - 1]);
+        unset($routine['item_param_opts_num'][$routine['item_num_params'] - 1]);
+        unset($routine['item_param_opts_text'][$routine['item_num_params'] - 1]);
         $routine['item_num_params']--;
     }
     $disableRemoveParam = '';
@@ -992,7 +992,7 @@ function PMA_RTN_getEditorForm($mode, $operation, $routine)
     $retval .= "            <th colspan='2'>" . __('Options') . "</th>\n";
     $retval .= "            <th class='routine_param_remove hide'>&nbsp;</th>\n";
     $retval .= "        </tr>";
-    for ($i=0; $i<$routine['item_num_params']; $i++) { // each parameter
+    for ($i = 0; $i < $routine['item_num_params']; $i++) { // each parameter
         $retval .= PMA_RTN_getParameterRow($routine, $i, $isprocedure_class);
     }
     $retval .= "        </table>";
@@ -1260,7 +1260,6 @@ function PMA_RTN_getQueryFromRequest()
             )
         ) {
             if (! $warned_about_length) {
-                $warned_about_length = true;
                 $errors[] = __(
                     'You must provide length/values for routine parameters'
                     . ' of type ENUM, SET, VARCHAR and VARBINARY.'
@@ -1351,7 +1350,7 @@ function PMA_RTN_handleExecute()
         $end_query = array();
         $args      = array();
         $all_functions = $GLOBALS['PMA_Types']->getAllFunctions();
-        for ($i=0; $i<$routine['item_num_params']; $i++) {
+        for ($i = 0; $i < $routine['item_num_params']; $i++) {
             if (isset($_REQUEST['params'][$routine['item_param_name'][$i]])) {
                 $value = $_REQUEST['params'][$routine['item_param_name'][$i]];
                 if (is_array($value)) { // is SET type
@@ -1594,7 +1593,7 @@ function PMA_RTN_getExecuteForm($routine)
 
     // Escape special characters
     $routine['item_name'] = htmlentities($routine['item_name'], ENT_QUOTES);
-    for ($i=0; $i<$routine['item_num_params']; $i++) {
+    for ($i = 0; $i < $routine['item_num_params']; $i++) {
         $routine['item_param_name'][$i] = htmlentities(
             $routine['item_param_name'][$i],
             ENT_QUOTES
@@ -1632,7 +1631,7 @@ function PMA_RTN_getExecuteForm($routine)
     $retval .= "</tr>\n";
     // Get a list of data types that are not yet supported.
     $no_support_types = PMA_Util::unsupportedDatatypes();
-    for ($i=0; $i<$routine['item_num_params']; $i++) { // Each parameter
+    for ($i = 0; $i < $routine['item_num_params']; $i++) { // Each parameter
         if ($routine['item_type'] == 'PROCEDURE'
             && $routine['item_param_dir'][$i] == 'OUT'
         ) {
@@ -1688,7 +1687,7 @@ function PMA_RTN_getExecuteForm($routine)
             } else {
                 $input_type = 'checkbox';
             }
-            for ($j=0; $j<$tokens['len']; $j++) {
+            for ($j = 0; $j < $tokens['len']; $j++) {
                 if ($tokens[$j]['type'] != 'punct_listsep') {
                     $tokens[$j]['data'] = htmlentities(
                         PMA_Util::unquote($tokens[$j]['data']),

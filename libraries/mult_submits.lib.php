@@ -150,6 +150,12 @@ function PMA_getQueryStrFromSelected(
             $use_sql    = true;
             break;
 
+        case 'checksum_tbl':
+            $sql_query .= (empty($sql_query) ? 'CHECKSUM TABLE ' : ', ')
+                       . PMA_Util::backquote($selected[$i]);
+            $use_sql    = true;
+            break;
+
         case 'repair_tbl':
             $sql_query .= (empty($sql_query) ? 'REPAIR TABLE ' : ', ')
                        . PMA_Util::backquote($selected[$i]);
@@ -403,7 +409,7 @@ function PMA_getHtmlForAddPrefixTable($action, $_url_params)
  * @param string $what        mult_submit type
  * @param string $action      action type
  * @param array  $_url_params URL params
- * @param array  $full_query  full sql query string
+ * @param string $full_query  full sql query string
  *
  * @return string
  */

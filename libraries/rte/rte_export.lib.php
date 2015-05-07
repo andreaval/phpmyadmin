@@ -23,8 +23,7 @@ function PMA_RTE_handleExport($export_data)
 
     $item_name = htmlspecialchars(PMA_Util::backquote($_GET['item_name']));
     if ($export_data !== false) {
-        $export_data = '<textarea cols="40" rows="15" style="width: 100%;">'
-                     . htmlspecialchars(trim($export_data)) . '</textarea>';
+        $export_data = htmlspecialchars(trim($export_data));
         $title = sprintf(PMA_RTE_getWord('export'), $item_name);
         if ($GLOBALS['is_ajax_request'] == true) {
             $response = PMA_Response::getInstance();
@@ -32,6 +31,8 @@ function PMA_RTE_handleExport($export_data)
             $response->addJSON('title', $title);
             exit;
         } else {
+            $export_data = '<textarea cols="40" rows="15" style="width: 100%;">'
+               . $export_data . '</textarea>';
             echo "<fieldset>\n"
                . "<legend>$title</legend>\n"
                . $export_data

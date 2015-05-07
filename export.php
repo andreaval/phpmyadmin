@@ -86,6 +86,7 @@ if (!defined('TESTSUITE')) {
             'ods_structure_or_data',
             'ods_columns',
             'json_structure_or_data',
+            'json_pretty_print',
             'xml_structure_or_data',
             'xml_export_events',
             'xml_export_functions',
@@ -127,6 +128,7 @@ if (!defined('TESTSUITE')) {
             'sql_utc_time',
             'sql_drop_database',
             'sql_views_as_tables',
+            'sql_metadata',
             'csv_separator',
             'csv_enclosed',
             'csv_escaped',
@@ -509,4 +511,3 @@ if (!defined('TESTSUITE')) {
         echo PMA_getHtmlForDisplayedExportFooter($back_button);
     } // end if
 }
-?>

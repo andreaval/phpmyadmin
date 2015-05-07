@@ -91,6 +91,8 @@ $strConfigDefaultTabServer_desc = __('Tab that is displayed when entering a serv
 $strConfigDefaultTabServer_name = __('Default server tab');
 $strConfigDefaultTabTable_desc = __('Tab that is displayed when entering a table.');
 $strConfigDefaultTabTable_name = __('Default table tab');
+$strConfigEnableAutocompleteForTablesAndColumns_desc = __('Autocomplete of the table and column names in the SQL queries.');
+$strConfigEnableAutocompleteForTablesAndColumns_name = __('Enable autocomplete for table and column names');
 $strConfigHideStructureActions_desc
     = __('Whether the table structure actions should be hidden.');
 $strConfigHideStructureActions_name = __('Hide table structure actions');
@@ -171,6 +173,7 @@ $strConfigExport_sql_dates_name = __('Creation/Update/Check dates');
 $strConfigExport_sql_delayed_name = __('Use delayed inserts');
 $strConfigExport_sql_disable_fk_name = __('Disable foreign key checks');
 $strConfigExport_sql_views_as_tables_name = __('Export views as tables');
+$strConfigExport_sql_metadata_name = __('Export related metadata from phpMyAdmin configuration storage');
 $strConfigExport_sql_drop_database_name = sprintf(__('Add %s'), 'DROP DATABASE');
 $strConfigExport_sql_drop_table_name
     = sprintf(__('Add %s'), 'DROP TABLE / VIEW / PROCEDURE / FUNCTION / EVENT / TRIGGER');
@@ -252,11 +255,9 @@ $strConfigForm_Other_core_settings_desc
 $strConfigForm_Page_titles = __('Page titles');
 $strConfigForm_Page_titles_desc = __(
     'Specify browser\'s title bar text. Refer to '
-    . '[doc@cfg_TitleTable]documentation[/doc] for magic strings that can be used '
+    . '[doc@faq6-27]documentation[/doc] for magic strings that can be used '
     . 'to get special values.'
 );
-$strConfigForm_Query_window = __('Query window');
-$strConfigForm_Query_window_desc = __('Customize query window options');
 $strConfigForm_Security = __('Security');
 $strConfigForm_Security_desc = __(
     'Please note that phpMyAdmin is just a user interface and its features do not '
@@ -341,7 +342,8 @@ $strConfigImport_csv_col_names_name = __('Lines terminated with');
 $strConfigImport_csv_enclosed_name = __('Columns enclosed with');
 $strConfigImport_csv_escaped_name = __('Columns escaped with');
 $strConfigImport_csv_ignore_name = __('Do not abort on INSERT error');
-$strConfigImport_csv_replace_name = __('Replace table data with file');
+$strConfigImport_csv_replace_name = __('Add ON DUPLICATE KEY UPDATE');
+$strConfigImport_csv_replace_desc = __('Update data when duplicate keys found on import');
 $strConfigImport_csv_terminated_name = __('Columns terminated with');
 $strConfigImport_format_desc = __(
     'Default format; be aware that this list depends on location (database, table) '
@@ -352,7 +354,8 @@ $strConfigImport_ldi_enclosed_name = __('Columns enclosed with');
 $strConfigImport_ldi_escaped_name = __('Columns escaped with');
 $strConfigImport_ldi_ignore_name = __('Do not abort on INSERT error');
 $strConfigImport_ldi_local_option_name = __('Use LOCAL keyword');
-$strConfigImport_ldi_replace_name = __('Replace table data with file');
+$strConfigImport_ldi_replace_name = __('Add ON DUPLICATE KEY UPDATE');
+$strConfigImport_ldi_replace_desc = __('Update data when duplicate keys found on import');
 $strConfigImport_ldi_terminated_name = __('Columns terminated with');
 $strConfigImport_ods_col_names_name = __('Column names in first row');
 $strConfigImport_ods_empty_rows_name = __('Do not import empty rows');
@@ -460,7 +463,7 @@ $strConfigNavigationTreeDisplayItemFilterMinimum_name
 $strConfigNavigationTreeDisplayDbFilterMinimum_name
     = __('Minimum number of databases to display the database filter box');
 $strConfigNavigationTreeEnableGrouping_desc = __(
-    'Group items in the navigation tree (determined by the separator defined below).'
+    'Group items in the navigation tree (determined by the separator defined in the Databases and Tables tabs above).'
 );
 $strConfigNavigationTreeEnableGrouping_name = __('Group items in the tree');
 $strConfigNavigationTreeDbSeparator_desc
@@ -769,15 +772,15 @@ $strConfigSQLQuery_Edit_name = __('Edit');
 $strConfigSQLQuery_Explain_name = __('Explain SQL');
 $strConfigSQLQuery_Refresh_name = __('Refresh');
 $strConfigSQLQuery_ShowAsPHP_name = __('Create PHP Code');
-$strConfigSuhosinDisableWarning_desc = __('A warning is displayed on the main page if Suhosin is detected.');
+$strConfigSuhosinDisableWarning_desc = __('Disable the default warning that is displayed on the main page if Suhosin is detected.');
 $strConfigSuhosinDisableWarning_name = __('Suhosin warning');
 $strConfigLoginCookieValidityDisableWarning_desc = __('Disable the default warning that is displayed on the main page if the value of the PHP setting session.gc_maxlifetime is less than the value of `LoginCookieValidity`.');
 $strConfigLoginCookieValidityDisableWarning_name = __(
     'Login cookie validity warning'
 );
-$strConfigTextareaCols_desc = __('Textarea size (columns) in edit mode, this value will be emphasized for SQL query textareas (*2) and for query window (*1.25).');
+$strConfigTextareaCols_desc = __('Textarea size (columns) in edit mode, this value will be emphasized for SQL query textareas (*2).');
 $strConfigTextareaCols_name = __('Textarea columns');
-$strConfigTextareaRows_desc = __('Textarea size (rows) in edit mode, this value will be emphasized for SQL query textareas (*2) and for query window (*1.25).');
+$strConfigTextareaRows_desc = __('Textarea size (rows) in edit mode, this value will be emphasized for SQL query textareas (*2).');
 $strConfigTextareaRows_name = __('Textarea rows');
 $strConfigTitleDatabase_desc = __('Title of browser window when a database is selected.');
 $strConfigTitleDatabase_name = __('Database');

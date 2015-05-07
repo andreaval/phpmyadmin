@@ -769,7 +769,7 @@ function PMA_getTextarea($column, $backup_field, $column_name_appendix,
         . ' cols="' . $textareaCols . '"'
         . ' dir="' . $text_dir . '"'
         . ' id="field_' . ($idindex) . '_3"'
-        . ' ' . $unnullify_trigger
+        . (! empty($unnullify_trigger) ? ' ' . $unnullify_trigger : '')
         . ' tabindex="' . ($tabindex + $tabindex_for_value) . '"'
         . ' data-type="' . $data_type . '">'
         . $special_chars_encoded
@@ -2786,11 +2786,11 @@ function PMA_getHtmlForInsertEditFormColumn($table_columns, $i, $column,
     // HTML attribute
 
     //add data attributes "no of decimals" and "data type"
-    $no_decimals=0;
+    $no_decimals = 0;
     $type = current(explode("(", $column['pma_type']));
     if (preg_match('/\(([^()]+)\)/', $column['pma_type'], $match)) {
         $match[0] = trim($match[0], '()');
-        $no_decimals=$match[0];
+        $no_decimals = $match[0];
     }
     $html_output .= '<td' . ' data-type="' . $type . '"' . ' data-decimals="'
         . $no_decimals . '">' . "\n";
@@ -2826,7 +2826,8 @@ function PMA_getHtmlForInsertEditFormColumn($table_columns, $i, $column,
             if (method_exists($transformation_plugin, 'getInputHtml')) {
                 $transformed_html = $transformation_plugin->getInputHtml(
                     $column, $row_id, $column_name_appendix,
-                    $transformation_options, $current_value, $text_dir
+                    $transformation_options, $current_value, $text_dir,
+                    $tabindex, $tabindex_for_value, $idindex
                 );
             }
             if (method_exists($transformation_plugin, 'getScripts')) {

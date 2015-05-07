@@ -181,6 +181,10 @@ button {
     margin-<?php echo $right; ?>: 1em;
 }
 
+.floatright {
+    float: <?php echo $right; ?>;
+}
+
 table.nospacing {
     border-spacing: 0;
 }
@@ -245,23 +249,6 @@ fieldset .formelement {
     margin-<?php echo $right; ?>:       0.5em;
     /* IE */
     white-space:        nowrap;
-}
-
-@media all and (min-width: 1600px) {
-    fieldset .formelement {
-        clear: none;
-    }
-    #foreign_keys.relationalTable td:first-child + td {
-        width: 25%;
-    }
-    #foreign_keys.relationalTable td:first-child + td select {
-        width: 32%;
-        margin-right: 1%;
-    }
-    #foreign_keys.relationalTable {
-        width: 100%;
-    }
-
 }
 
 /* revert for Gecko */
@@ -837,7 +824,7 @@ div#tablestatistics table {
     position: fixed;
     padding: .1em .3em;
     top: 0;
-    z-index: 900;
+    z-index: 99;
     background: white;
 }
 
@@ -967,12 +954,6 @@ div#tablestatistics table {
 h3#serverstatusqueries span {
     font-size:60%;
     display:inline;
-}
-
-img.sortableIcon {
-    float:right;
-    background-repeat:no-repeat;
-    margin:0;
 }
 
 .buttonlinks {
@@ -2025,7 +2006,6 @@ fieldset .disabled-field td {
 #table_name_col_no {
     position: fixed;
     top: 44px;
-    z-index: 500;
     width: 100%;
     background: <?php echo $GLOBALS['cfg']['MainBackground']; ?>;
 }
@@ -2756,6 +2736,26 @@ table.show_create td {
     background: #fff;
     padding-top: .4em;
 }
+#pma_console .content.console_dark_theme {
+    background: #000;
+    color: #fff;
+}
+#pma_console .content.console_dark_theme .CodeMirror-wrap {
+    background: #000;
+    color: #fff;
+}
+#pma_console .content.console_dark_theme .action_content {
+    color: #000;
+}
+#pma_console .content.console_dark_theme .message {
+    border-color: #373B41;
+}
+#pma_console .content.console_dark_theme .CodeMirror-cursor {
+    border-color: #fff;
+}
+#pma_console .content.console_dark_theme .cm-keyword {
+    color: #de935f;
+}
 #pma_console .message,
 #pma_console .query_input {
     position: relative;
@@ -3120,3 +3120,57 @@ th.headerSortDown .sorticon, th.headerSortUp:hover .sorticon {
     background-image: url(<?php echo $_SESSION['PMA_Theme']->getImgPath('s_asc.png');?>);
 }
 /* end of styles of sortable tables */
+
+/* Override some jQuery-ui styling to have square corners */
+body .ui-corner-all,
+body .ui-corner-top,
+body .ui-corner-left,
+body .ui-corner-tl {
+    border-top-left-radius: 0;
+}
+body .ui-corner-all,
+body .ui-corner-top,
+body .ui-corner-right,
+body .ui-corner-tr {
+    border-top-right-radius: 0;
+}
+body .ui-corner-all,
+body .ui-corner-bottom,
+body .ui-corner-left,
+body .ui-corner-bl {
+    border-bottom-left-radius: 0;
+}
+body .ui-corner-all,
+body .ui-corner-bottom,
+body .ui-corner-right,
+body .ui-corner-br {
+    border-bottom-right-radius: 0;
+}
+/* Override  jQuery-ui styling for ui-dialog */
+body .ui-dialog {
+    padding: 0;
+    border-color: #000000;
+}
+body .ui-dialog .ui-dialog-titlebar {
+    padding: .3em .5em;
+    border: none;
+    border-bottom: 1px solid #000000;
+}
+body .ui-dialog .ui-dialog-titlebar button {
+    border: 1px solid #999999;
+}
+body .ui-dialog .ui-dialog-content {
+    padding: .2em .4em;
+}
+body .ui-dialog .ui-dialog-buttonpane {
+    background: #D3DCE3;
+    border-top: 1px solid #000000;
+}
+body .ui-dialog .ui-dialog-buttonpane button {
+    margin: .1em 0 .1em .4em;
+    border: 1px solid #999999;
+    color: #000000;
+}
+body .ui-dialog .ui-button-text-only .ui-button-text {
+    padding: .2em .6em;
+}

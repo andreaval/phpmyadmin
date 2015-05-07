@@ -22,13 +22,16 @@ class PMA_Export_Relation_Schema
     /**
      * Constructor.
      *
-     * @see PMA_SVG
+     * @param object $diagram schema diagram
      */
-    function __construct()
+    function __construct($diagram)
     {
+        $this->diagram = $diagram;
         $this->setPageNumber($_REQUEST['page_number']);
         $this->setOffline(isset($_REQUEST['offline_export']));
     }
+
+    protected $diagram;
 
     protected $showColor;
     protected $tableDimension;
@@ -251,6 +254,8 @@ class PMA_Export_Relation_Schema
      * Returns the file name
      *
      * @param String $extension file extension
+     *
+     * @return string file name
      */
     protected function getFileName($extension)
     {

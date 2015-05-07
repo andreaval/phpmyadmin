@@ -21,12 +21,19 @@ require_once 'libraries/plugins/TransformationsPlugin.class.php';
  */
 class Text_Plain_Xml extends TransformationsPlugin
 {
+    /**
+     * No-arg constructor
+     */
     public function __construct()
     {
-        $response = PMA_Response::getInstance();
-        $scripts = $response->getHeader()->getScripts();
-        $scripts->addFile('codemirror/mode/xml/xml.js');
-        $scripts->addFile('transformations/xml.js');
+        if (! empty($GLOBALS['cfg']['CodemirrorEnable'])) {
+            $response = PMA_Response::getInstance();
+            $scripts = $response->getHeader()->getScripts();
+            $scripts->addFile('codemirror/lib/codemirror.js');
+            $scripts->addFile('codemirror/mode/xml/xml.js');
+            $scripts->addFile('codemirror/addon/runmode/runmode.js');
+            $scripts->addFile('transformations/xml.js');
+        }
     }
 
     /**

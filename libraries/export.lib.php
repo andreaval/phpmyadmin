@@ -238,11 +238,11 @@ function PMA_getMemoryLimitForExport()
 /**
  * Return the filename and MIME type for export file
  *
- * @param string $export_type       type of export
- * @param string $remember_template whether to remember template
- * @param object $export_plugin     the export plugin
- * @param string $compression       compression asked
- * @param string $filename_template the filename template
+ * @param string       $export_type       type of export
+ * @param string       $remember_template whether to remember template
+ * @param ExportPlugin $export_plugin     the export plugin
+ * @param string       $compression       compression asked
+ * @param string       $filename_template the filename template
  *
  * @return array the filename template and mime type
  */
@@ -470,17 +470,17 @@ function PMA_getHtmlForDisplayedExportHeader($export_type, $db, $table)
 /**
  * Export at the server level
  *
- * @param string $db_select       the selected databases to export
- * @param string $whatStrucOrData structure or data or both
- * @param object $export_plugin   the selected export plugin
- * @param string $crlf            end of line character(s)
- * @param string $err_url         the URL in case of error
- * @param string $export_type     the export type
- * @param bool   $do_relation     whether to export relation info
- * @param bool   $do_comments     whether to add comments
- * @param bool   $do_mime         whether to add MIME info
- * @param bool   $do_dates        whether to add dates
- * @param array  $aliases         Alias information for db/table/column
+ * @param string       $db_select       the selected databases to export
+ * @param string       $whatStrucOrData structure or data or both
+ * @param ExportPlugin $export_plugin   the selected export plugin
+ * @param string       $crlf            end of line character(s)
+ * @param string       $err_url         the URL in case of error
+ * @param string       $export_type     the export type
+ * @param bool         $do_relation     whether to export relation info
+ * @param bool         $do_comments     whether to add comments
+ * @param bool         $do_mime         whether to add MIME info
+ * @param bool         $do_dates        whether to add dates
+ * @param array        $aliases         alias information for db/table/column
  *
  * @return void
  */
@@ -511,18 +511,18 @@ function PMA_exportServer(
 /**
  * Export at the database level
  *
- * @param string $db              the database to export
- * @param array  $tables          the tables to export
- * @param string $whatStrucOrData structure or data or both
- * @param object $export_plugin   the selected export plugin
- * @param string $crlf            end of line character(s)
- * @param string $err_url         the URL in case of error
- * @param string $export_type     the export type
- * @param bool   $do_relation     whether to export relation info
- * @param bool   $do_comments     whether to add comments
- * @param bool   $do_mime         whether to add MIME info
- * @param bool   $do_dates        whether to add dates
- * @param array  $aliases         Alias information for db/table/column
+ * @param string       $db              the database to export
+ * @param array        $tables          the tables to export
+ * @param string       $whatStrucOrData structure or data or both
+ * @param ExportPlugin $export_plugin   the selected export plugin
+ * @param string       $crlf            end of line character(s)
+ * @param string       $err_url         the URL in case of error
+ * @param string       $export_type     the export type
+ * @param bool         $do_relation     whether to export relation info
+ * @param bool         $do_comments     whether to add comments
+ * @param bool         $do_mime         whether to add MIME info
+ * @param bool         $do_dates        whether to add dates
+ * @param array        $aliases         Alias information for db/table/column
  *
  * @return void
  */
@@ -658,27 +658,40 @@ function PMA_exportDatabase(
     if (! $export_plugin->exportDBFooter($db, $db_alias)) {
         return;
     }
+
+    // export metadata related to this db
+    if (isset($GLOBALS['sql_metadata'])) {
+        // Types of metatada to export.
+        // In the future these can be allowed to be selected by the user
+        $metadataTypes = PMA_getMetadataTypesToExport();
+
+        if (! $export_plugin->exportMetadata(
+            $db, $tables, $metadataTypes
+        )) {
+            return;
+        }
+    }
 }
 
 /**
  * Export at the table level
  *
- * @param string $db              the database to export
- * @param string $table           the table to export
- * @param string $whatStrucOrData structure or data or both
- * @param object $export_plugin   the selected export plugin
- * @param string $crlf            end of line character(s)
- * @param string $err_url         the URL in case of error
- * @param string $export_type     the export type
- * @param bool   $do_relation     whether to export relation info
- * @param bool   $do_comments     whether to add comments
- * @param bool   $do_mime         whether to add MIME info
- * @param bool   $do_dates        whether to add dates
- * @param string $allrows         whether "dump all rows" was ticked
- * @param string $limit_to        upper limit
- * @param string $limit_from      starting limit
- * @param string $sql_query       query for which exporting is requested
- * @param array  $aliases         Alias information for db/table/column
+ * @param string       $db              the database to export
+ * @param string       $table           the table to export
+ * @param string       $whatStrucOrData structure or data or both
+ * @param ExportPlugin $export_plugin   the selected export plugin
+ * @param string       $crlf            end of line character(s)
+ * @param string       $err_url         the URL in case of error
+ * @param string       $export_type     the export type
+ * @param bool         $do_relation     whether to export relation info
+ * @param bool         $do_comments     whether to add comments
+ * @param bool         $do_mime         whether to add MIME info
+ * @param bool         $do_dates        whether to add dates
+ * @param string       $allrows         whether "dump all rows" was ticked
+ * @param string       $limit_to        upper limit
+ * @param string       $limit_from      starting limit
+ * @param string       $sql_query       query for which exporting is requested
+ * @param array        $aliases         Alias information for db/table/column
  *
  * @return void
  */
@@ -775,6 +788,18 @@ function PMA_exportTable(
     if (! $export_plugin->exportDBFooter($db, $db_alias)) {
         return;
     }
+
+    if (isset($GLOBALS['sql_metadata'])) {
+        // Types of metatada to export.
+        // In the future these can be allowed to be selected by the user
+        $metadataTypes = PMA_getMetadataTypesToExport();
+
+        if (! $export_plugin->exportMetadata(
+            $db, $table, $metadataTypes
+        )) {
+            return;
+        }
+    }
 }
 
 /**
@@ -868,7 +893,7 @@ function PMA_mergeAliases($aliases1, $aliases2)
 function PMA_lockTables($db, $tables, $lockType = "WRITE")
 {
     $locks = array();
-    foreach($tables as $table) {
+    foreach ($tables as $table) {
         $locks[] = PMA_Util::backquote($db) . "." . PMA_Util::backquote($table)
             . " " . $lockType;
     }
@@ -885,5 +910,25 @@ function PMA_lockTables($db, $tables, $lockType = "WRITE")
 function PMA_unlockTables()
 {
     return $GLOBALS['dbi']->tryQuery("UNLOCK TABLES");
+}
+
+/**
+ * Returns the all the metadata types the can be exported with a database or a table
+ *
+ * @return array metadata types.
+ */
+function PMA_getMetadataTypesToExport()
+{
+    return array(
+        'column_info',
+        'table_uiprefs',
+        'tracking',
+        'bookmark',
+        'relation',
+        'table_coords',
+        'pdf_pages',
+        'savedsearches',
+        'central_columns',
+    );
 }
 ?>

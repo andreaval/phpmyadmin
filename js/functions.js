@@ -276,7 +276,8 @@ function PMA_current_version(data)
                 /* Security update */
                 htmlClass = 'error';
             }
-            $('#maincontainer').after('<div class="' + htmlClass + '">' + message + '</div>');
+            $('#newer_version_notice').remove();
+            $('#maincontainer').after('<div id="newer_version_notice" class="' + htmlClass + '">' + message + '</div>');
         }
         if (latest === current) {
             version_information_message = ' (' + PMA_messages.strUpToDate + ')';
@@ -353,11 +354,22 @@ function PMA_addDatepicker($this_element, type, options)
             // Remember that we came from the datepicker; this is used
             // in tbl_change.js by verificationsAfterFieldChange()
             $this_element.data('comes_from', 'datepicker');
-
+            if ($(input).closest('.cEdit').length > 0) {
+                setTimeout(function () {
+                    inst.dpDiv.css({
+                        top: 0,
+                        left: 0,
+                        position: 'relative'
+                    });
+                }, 0);
+            }
             // Fix wrong timepicker z-index, doesn't work without timeout
             setTimeout(function () {
                 $('#ui-timepicker-div').css('z-index', $('#ui-datepicker-div').css('z-index'));
             }, 0);
+        },
+        onSelect: function() {
+            $this_element.data('datepicker').inline = true;
         },
         onClose: function (dateText, dp_inst) {
             // The value is no more from the date picker
@@ -685,9 +697,9 @@ var last_shift_clicked_row = -1;
 
 var _idleSecondsCounter = 0;
 var IncInterval;
-var updateInterval;
+var updateTimeout;
 AJAX.registerTeardown('functions.js', function () {
-    clearInterval(updateInterval);
+    clearTimeout(updateTimeout);
     clearInterval(IncInterval);
     $(document).off('mousemove');
 });
@@ -711,6 +723,7 @@ AJAX.registerOnload('functions.js', function () {
         var params = {
                 'ajax_request' : true,
                 'token' : PMA_commonParams.get('token'),
+                'server' : PMA_commonParams.get('server'),
                 'db' : PMA_commonParams.get('db'),
                 'access_time':_idleSecondsCounter
             };
@@ -719,16 +732,15 @@ AJAX.registerOnload('functions.js', function () {
                 url: href,
                 data: params,
                 success: function (data) {
-                    clearInterval(updateInterval);
                     if (data.success) {
                         if (PMA_commonParams.get('LoginCookieValidity')-_idleSecondsCounter > 5) {
                             var interval = (PMA_commonParams.get('LoginCookieValidity') - _idleSecondsCounter - 5) * 1000;
                             if (interval > Math.pow(2, 31) - 1) { // max value for setInterval() function
                                 interval = Math.pow(2, 31) - 1;
                             }
-                            updateInterval = window.setInterval(UpdateIdleTime, interval);
+                            updateTimeout = window.setTimeout(UpdateIdleTime, interval);
                         } else {
-                            updateInterval = window.setInterval(UpdateIdleTime, 2000);
+                            updateTimeout = window.setTimeout(UpdateIdleTime, 2000);
                         }
                     } else { //timeout occurred
                         window.location.reload(true);
@@ -737,13 +749,13 @@ AJAX.registerOnload('functions.js', function () {
                 }
             });
     }
-    if (PMA_commonParams.get('logged_in')) {
+    if (PMA_commonParams.get('logged_in') && PMA_commonParams.get('auth_type') == 'cookie') {
         IncInterval = window.setInterval(SetIdleTime, 1000);
         var interval = (PMA_commonParams.get('LoginCookieValidity') - 5) * 1000;
         if (interval > Math.pow(2, 31) - 1) { // max value for setInterval() function
             interval = Math.pow(2, 31) - 1;
         }
-        updateInterval = window.setInterval(UpdateIdleTime, interval);
+        updateTimeout = window.setTimeout(UpdateIdleTime, interval);
     }
 });
 /**
@@ -978,9 +990,9 @@ function insertQuery(queryType)
         return;
     } else if (queryType == "format") {
         if (codemirror_editor) {
-            $('#querymessage').html(PMA_messages.strFormatting
-                + '&nbsp;<img class="ajaxIcon" src="'
-                + pmaThemeImage + 'ajax_clock_small.gif" alt="">');
+            $('#querymessage').html(PMA_messages.strFormatting +
+                '&nbsp;<img class="ajaxIcon" src="' +
+                pmaThemeImage + 'ajax_clock_small.gif" alt="">');
             var href = 'db_sql_format.php';
             var params = {
                 'ajax_request': true,
@@ -1095,6 +1107,44 @@ function insertValueQuery()
 }
 
 /**
+ * Updates the input fields for the parameters based on the query
+ */
+function updateQueryParameters() {
+
+    if ($('#parameterized').is(':checked')) {
+        var query = codemirror_editor ? codemirror_editor.getValue() : $('#sqlquery').val();
+
+        var allParameters = query.match(/:[a-zA-Z0-9_]+/g);
+         var parameters = [];
+         // get unique parameters
+         if (allParameters) {
+             $.each(allParameters, function(i, parameter){
+                 if ($.inArray(parameter, parameters) === -1) {
+                     parameters.push(parameter);
+                 }
+             });
+         }
+
+         var $temp = $('<div />');
+         $temp.append($('#parametersDiv').children());
+         $('#parametersDiv').empty();
+
+         $.each(parameters, function (i, parameter) {
+             var paramName = parameter.substring(1);
+             var $param = $temp.find('#paramSpan_' + paramName );
+             if (! $param.length) {
+                 $param = $('<span class="parameter" id="paramSpan_' + paramName + '" />');
+                 $('<label for="param_' + paramName + '" />').text(parameter).appendTo($param);
+                 $('<input type="text" name="parameters[' + parameter + ']" id="param_' + paramName + '" />').appendTo($param);
+             }
+             $('#parametersDiv').append($param);
+         });
+    } else {
+        $('#parametersDiv').empty();
+    }
+}
+
+/**
  * Add a date/time picker to each element that needs it
  * (only when jquery-ui-timepicker-addon.js is loaded)
  */
@@ -1102,19 +1152,24 @@ function addDateTimePicker() {
     if ($.timepicker !== undefined) {
         $('input.timefield, input.datefield, input.datetimefield').each(function () {
 
-            no_decimals = $(this).parent().attr('data-decimals');
+            var decimals = $(this).parent().attr('data-decimals');
+            var type = $(this).parent().attr('data-type');
+
             var showMillisec = false;
             var showMicrosec = false;
             var timeFormat = 'HH:mm:ss';
             // check for decimal places of seconds
-            if (($(this).parent().attr('data-decimals') > 0) && ($(this).parent().attr('data-type').indexOf('time') != -1)){
-                showMillisec = true;
-                timeFormat = 'HH:mm:ss.lc';
-                if ($(this).parent().attr('data-decimals') > 3) {
+            if (decimals > 0 && type.indexOf('time') != -1){
+                if (decimals > 3) {
+                    showMillisec = true;
                     showMicrosec = true;
+                    timeFormat = 'HH:mm:ss.lc';
+                } else {
+                    showMillisec = true;
+                    timeFormat = 'HH:mm:ss.l';
                 }
             }
-            PMA_addDatepicker($(this), $(this).parent().attr('data-type'), {
+            PMA_addDatepicker($(this), type, {
                 showMillisec: showMillisec,
                 showMicrosec: showMicrosec,
                 timeFormat: timeFormat
@@ -1581,6 +1636,12 @@ AJAX.registerTeardown('functions.js', function () {
     $(document).off('click', "input#sql_query_edit_save");
     $(document).off('click', "input#sql_query_edit_discard");
     $('input.sqlbutton').unbind('click');
+    if (codemirror_editor) {
+        codemirror_editor.off('blur');
+    } else {
+        $(document).off('blur', '#sqlquery');
+    }
+    $(document).off('change', '#parameterized');
     $("#export_type").unbind('change');
     $('#sqlquery').unbind('keydown');
     $('#sql_query_edit').unbind('keydown');
@@ -1665,42 +1726,7 @@ AJAX.registerOnload('functions.js', function () {
         return false;
     });
 
-    $("#export_type").change(function () {
-        if ($("#export_type").val() == 'svg') {
-            $("#show_grid_opt").prop("disabled", true);
-            $("#orientation_opt").prop("disabled", true);
-            $("#with_doc").prop("disabled", true);
-            $("#show_table_dim_opt").removeProp("disabled");
-            $("#all_tables_same_width").removeProp("disabled");
-            $("#paper_opt").removeProp("disabled");
-            $("#show_color_opt").removeProp("disabled");
-            //$(this).css("background-color","yellow");
-        } else if ($("#export_type").val() == 'dia') {
-            $("#show_grid_opt").prop("disabled", true);
-            $("#with_doc").prop("disabled", true);
-            $("#show_table_dim_opt").prop("disabled", true);
-            $("#all_tables_same_width").prop("disabled", true);
-            $("#paper_opt").removeProp("disabled");
-            $("#show_color_opt").removeProp("disabled");
-            $("#orientation_opt").removeProp("disabled");
-        } else if ($("#export_type").val() == 'eps') {
-            $("#show_grid_opt").prop("disabled", true);
-            $("#orientation_opt").removeProp("disabled");
-            $("#with_doc").prop("disabled", true);
-            $("#show_table_dim_opt").prop("disabled", true);
-            $("#all_tables_same_width").prop("disabled", true);
-            $("#paper_opt").prop("disabled", true);
-            $("#show_color_opt").prop("disabled", true);
-        } else if ($("#export_type").val() == 'pdf') {
-            $("#show_grid_opt").removeProp("disabled");
-            $("#orientation_opt").removeProp("disabled");
-            $("#with_doc").removeProp("disabled");
-            $("#show_table_dim_opt").removeProp("disabled");
-            $("#all_tables_same_width").removeProp("disabled");
-            $("#paper_opt").removeProp("disabled");
-            $("#show_color_opt").removeProp("disabled");
-        }
-    });
+    $(document).on('change', '#parameterized', updateQueryParameters);
 
     if ($('#input_username')) {
         if ($('#input_username').val() === '') {
@@ -1934,6 +1960,57 @@ function PMA_highlightSQL($base)
 }
 
 /**
+ * Updates an element containing code.
+ *
+ * @param jQuery Object $base base element which contains the raw and the
+ *                            highlighted code.
+ *
+ * @param string htmlValue    code in HTML format, displayed if code cannot be
+ *                            highlighted
+ *
+ * @param string rawValue     raw code, used as a parameter for highlighter
+ *
+ * @return bool               whether content was updated or not
+ */
+function PMA_updateCode($base, htmlValue, rawValue)
+{
+    var $code = $base.find('code');
+    if ($code.length == 0) {
+        return false;
+    }
+
+    // Determines the type of the content and appropriate CodeMirror mode.
+    var type = '', mode = '';
+    if  ($code.hasClass('json')) {
+        type = 'json';
+        mode = 'application/json';
+    } else if ($code.hasClass('sql')) {
+        type = 'sql';
+        mode = 'text/x-mysql';
+    } else if ($code.hasClass('xml')) {
+        type = 'xml';
+        mode = 'application/xml';
+    } else {
+        return false;
+    }
+
+    // Element used to display unhighlighted code.
+    var $notHighlighted = $('<pre>' + htmlValue + '</pre>');
+
+    // Tries to highlight code using CodeMirror.
+    if (typeof CodeMirror != 'undefined') {
+        var $highlighted = $('<div class="' + type + '-highlight cm-s-default"></div>');
+        CodeMirror.runMode(rawValue, mode, $highlighted[0]);
+        $notHighlighted.hide();
+        $code.html('').append($notHighlighted, $highlighted[0]);
+    } else {
+        $code.html('').append($notHighlighted);
+    }
+
+    return true;
+}
+
+/**
  * Show a message on the top of the page for an Ajax request
  *
  * Sample usage:
@@ -1999,7 +2076,7 @@ function PMA_ajaxShowMessage(message, timeout)
     // Create a parent element for the AJAX messages, if necessary
     if ($('#loading_parent').length === 0) {
         $('<div id="loading_parent"></div>')
-        .prependTo("body");
+        .prependTo("#page_content");
     }
     // Update message count to create distinct message elements every time
     ajax_message_count++;
@@ -2426,10 +2503,7 @@ function PMA_SQLPrettyPrint(string)
 
 jQuery.fn.PMA_confirm = function (question, url, callbackFn) {
     var confirmState = PMA_commonParams.get('confirm');
-    // when the Confirm directive is set to false in config.inc.php
-    // and not changed in user prefs, confirmState is ""
-    // when it's unticked in user prefs, confirmState is 1
-    if (confirmState === "" || confirmState === "1") {
+    if (! confirmState) {
         // user does not want to confirm
         if ($.isFunction(callbackFn)) {
             callbackFn.call(this, url);
@@ -2664,6 +2738,7 @@ AJAX.registerOnload('functions.js', function () {
                 $("#page_content").html(data.message);
                 PMA_highlightSQL($('#page_content'));
                 PMA_verifyColumnsProperties();
+                PMA_hideShowConnection($('.create_table_form select[name=tbl_storage_engine]'));
                 PMA_ajaxRemoveMessage($msgbox);
             } else {
                 PMA_ajaxShowMessage(data.error);
@@ -3156,7 +3231,7 @@ AJAX.registerOnload('functions.js', function () {
         var min = (list_size <= maxRows) ? list_size : maxRows;
         for (i = 0; i < min; i++) {
 
-            fields += '<tr><td><div><span style="font-size:14px; font-weight:bold">' +
+            fields += '<tr><td><div><span style="font-weight:bold">' +
                 escapeHtml(central_column_list[db + '_' + table][i].col_name) +
                 '</span><br><span style="color:gray">' + central_column_list[db + '_' + table][i].col_type;
 
@@ -3219,7 +3294,7 @@ AJAX.registerOnload('functions.js', function () {
                     min = (list_size <= maxRows + result_pointer) ? list_size : maxRows + result_pointer;
                     for (i = result_pointer; i < min; i++) {
 
-                        fields += '<tr><td><div><span style="font-size:14px; font-weight:bold">' +
+                        fields += '<tr><td><div><span style="font-weight:bold">' +
                             central_column_list[db + '_' + table][i].col_name +
                             '</span><br><span style="color:gray">' +
                             central_column_list[db + '_' + table][i].col_type;
@@ -3467,7 +3542,11 @@ function showIndexEditDialog($outer)
     $('#index_columns td').each(function () {
         $(this).css("width", $(this).width() + 'px');
     });
-    $('#index_columns tbody').sortable();
+    $('#index_columns tbody').sortable({
+        axis: 'y',
+        containment: $("#index_columns tbody"),
+        tolerance: 'pointer'
+    });
     PMA_showHints($outer);
     PMA_init_slider();
     // Add a slider for selecting how many columns to add to the index
@@ -3482,6 +3561,7 @@ function showIndexEditDialog($outer)
             );
         }
     });
+    $('div.add_fields').removeClass('hide');
     // focus index size input on column picked
     $outer.find('table#index_columns select').change(function () {
         if ($(this).find("option:selected").val() === '') {
@@ -3778,15 +3858,14 @@ AJAX.registerOnload('functions.js', function () {
             cache: false,
             type: 'POST',
             data: {
-                favorite_tables: (isStorageSupported('localStorage'))
-                    ? window.localStorage['favorite_tables']
+                favorite_tables: (isStorageSupported('localStorage') && typeof window.localStorage.favorite_tables !== 'undefined')
+                    ? window.localStorage.favorite_tables
                     : ''
             },
             success: function (data) {
                 // Update localStorage.
                 if (isStorageSupported('localStorage')) {
-                    window.localStorage.favorite_tables
-                        = data.favorite_tables;
+                    window.localStorage.favorite_tables = data.favorite_tables;
                 }
                 $('#pma_favorite_list').html(data.list);
             }
@@ -3954,6 +4033,7 @@ AJAX.registerOnload('functions.js', function () {
                 lineWrapping: true
             });
             codemirror_editor.on("inputRead", codemirrorAutocompleteOnInputRead);
+            codemirror_editor.on("blur", updateQueryParameters);
             codemirror_editor.focus();
             $(codemirror_editor.getWrapperElement()).bind(
                 'keydown',
@@ -3961,7 +4041,9 @@ AJAX.registerOnload('functions.js', function () {
             );
         } else {
             // without codemirror
-            $elm.focus().bind('keydown', catchKeypressesFromSqlTextboxes);
+            $elm.focus()
+                .bind('keydown', catchKeypressesFromSqlTextboxes)
+                .bind('blur', updateQueryParameters);
         }
     }
     PMA_highlightSQL($('body'));
@@ -4289,6 +4371,35 @@ $(document).on("change", "input.checkall_box", function () {
 });
 
 /**
+ * Watches checkboxes in a sub form to set the sub checkall box accordingly
+ */
+var sub_checkboxes_changed = function () {
+    var $form = $(this).parent().parent();
+    // total number of checkboxes in current sub form
+    var total_boxes = $form.find(checkboxes_sel).length;
+    // number of checkboxes checked in current sub form
+    var checked_boxes = $form.find(checkboxes_sel + ":checked").length;
+    var $checkall = $form.find("input.sub_checkall_box");
+    if (total_boxes == checked_boxes) {
+        $checkall.prop({checked: true, indeterminate: false});
+    }
+    else if (checked_boxes > 0) {
+        $checkall.prop({checked: true, indeterminate: true});
+    }
+    else {
+        $checkall.prop({checked: false, indeterminate: false});
+    }
+};
+$(document).on("change", checkboxes_sel + ", input.checkall_box:checkbox:enabled", sub_checkboxes_changed);
+
+$(document).on("change", "input.sub_checkall_box", function () {
+    var is_checked = $(this).is(":checked");
+    var $form = $(this).parent().parent();
+    $form.find(checkboxes_sel).prop("checked", is_checked)
+    .parents("tr").toggleClass("marked", is_checked);
+});
+
+/**
  * Toggles row colors of a set of 'tr' elements starting from a given element
  *
  * @param $start Starting element
@@ -4431,8 +4542,8 @@ function checkNumberOfFields() {
  *
  */
 function PMA_ignorePhpErrors(clearPrevErrors){
-    if (typeof(clearPrevErrors) === "undefined"
-        || clearPrevErrors === null
+    if (typeof(clearPrevErrors) === "undefined" ||
+        clearPrevErrors === null
     ) {
         str = false;
     }

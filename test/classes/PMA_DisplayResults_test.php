@@ -247,12 +247,12 @@ class PMA_DisplayResults_Test extends PHPUnit_Framework_TestCase
     /**
      * Test for _getClassesForColumn
      *
-     * @param string  $grid_edit_class  the class for all editable columns
-     * @param string  $not_null_class   the class for not null columns
-     * @param string  $relation_class   the class for relations in a column
-     * @param string  $hide_class       the class for visibility of a column
-     * @param string  $field_type_class the class related to type of the field
-     * @param string  $output           output of__getResettedClassForInlineEdit
+     * @param string $grid_edit_class  the class for all editable columns
+     * @param string $not_null_class   the class for not null columns
+     * @param string $relation_class   the class for relations in a column
+     * @param string $hide_class       the class for visibility of a column
+     * @param string $field_type_class the class related to type of the field
+     * @param string $output           output of__getResettedClassForInlineEdit
      *
      * @return void
      *
@@ -365,7 +365,7 @@ class PMA_DisplayResults_Test extends PHPUnit_Framework_TestCase
     public function testGetCheckBoxesForMultipleRowOperations(
         $dir, $displayParts, $output
     ) {
-        $vertical_display = array(
+        $display_params = array(
             'row_delete' => array(
                 '<td class="odd" class="center"><input '
                 . 'type="checkbox" id="id_rows_to_delete0[%_PMA_CHECKBOX_DIR_%]" '
@@ -382,7 +382,7 @@ class PMA_DisplayResults_Test extends PHPUnit_Framework_TestCase
             )
         );
 
-        $this->object->__set('vertical_display', $vertical_display);
+        $this->object->__set('display_params', $display_params);
 
         $_SESSION['tmpval']['repeat_cells'] = 0;
         $this->assertEquals(
@@ -1423,10 +1423,10 @@ class PMA_DisplayResults_Test extends PHPUnit_Framework_TestCase
     public function dataProviderForTestGetPartialText()
     {
         return array(
-            array('P', 10, 'foo', false),
-            array('P', 1, 'foo', true),
-            array('F', 10, 'foo', false),
-            array('F', 1, 'foo', false)
+            array('P', 10, 'foo', array(false, 'foo', 3)),
+            array('P', 1, 'foo', array(true, 'f...', 3)),
+            array('F', 10, 'foo', array(false, 'foo', 3)),
+            array('F', 1, 'foo', array(false, 'foo', 3))
         );
     }
 
@@ -1451,7 +1451,7 @@ class PMA_DisplayResults_Test extends PHPUnit_Framework_TestCase
             $output,
             $this->_callPrivateFunction(
                 '_getPartialText',
-                array(&$str)
+                array($str)
             )
         );
     }
@@ -1676,6 +1676,7 @@ class PMA_DisplayResults_Test extends PHPUnit_Framework_TestCase
                 0,
                 0,
                 '<td data-decimals="0" data-type="string" '
+                . 'data-originallength="11" '
                 . 'class="grid_edit ">foo bar baz</td>' . "\n"
             )
         );

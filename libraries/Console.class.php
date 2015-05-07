@@ -21,13 +21,6 @@ require_once 'libraries/bookmark.lib.php';
 class PMA_Console
 {
     /**
-     * PMA_Scripts instance
-     *
-     * @access private
-     * @var PMA_Scripts
-     */
-    private $_scripts;
-    /**
      * Whether to display anything
      *
      * @access private
@@ -41,7 +34,6 @@ class PMA_Console
     public function __construct()
     {
         $this->_isEnabled = true;
-        $this->_scripts   = new PMA_Scripts();
     }
 
     /**
@@ -148,6 +140,16 @@ class PMA_Console
     }
 
     /**
+     * Returns the list of JS scripts required by console
+     *
+     * @return array list of scripts
+     */
+    public function getScripts()
+    {
+        return array('console.js');
+    }
+
+    /**
      * Renders the console
      *
      * @access public
@@ -158,15 +160,6 @@ class PMA_Console
         $output  = '';
         if ((! $this->_isAjax) && $this->_isEnabled) {
             $cfgBookmark = PMA_Bookmark_getParams();
-            if ($GLOBALS['cfg']['CodemirrorEnable']) {
-                $this->_scripts->addFile('codemirror/lib/codemirror.js');
-                $this->_scripts->addFile('codemirror/mode/sql/sql.js');
-                $this->_scripts->addFile('codemirror/addon/runmode/runmode.js');
-                $this->_scripts->addFile('codemirror/addon/hint/show-hint.js');
-                $this->_scripts->addFile('codemirror/addon/hint/sql-hint.js');
-            }
-            $this->_scripts->addFile('console.js');
-            $output .= $this->_scripts->getDisplay();
             $output .= '<div id="pma_console_container"><div id="pma_console">';
 
             // The templates, use sprintf() to output them
@@ -314,8 +307,12 @@ class PMA_Console
                     .  '<label><input type="checkbox" name="current_query">'
                     .  __('Show current browsing query') . '</label><br>'
                     .  '<label><input type="checkbox" name="enter_executes">'
-                    .  __('Execute queries on Enter and insert new line with Shift + Enter. '
-                    .     'To make this permanent, view settings.') . '</label><br>'
+                    .  __(
+                        'Execute queries on Enter and insert new line with Shift + Enter. '
+                        . 'To make this permanent, view settings.'
+                    ) . '</label><br>'
+                    .  '<label><input type="checkbox" name="dark_theme">'
+                    .  __('Switch to dark theme') . '</label><br>'
                     .  '</div>';
             $output .= '</div>'; // Options card
 

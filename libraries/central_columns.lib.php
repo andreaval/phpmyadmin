@@ -253,7 +253,7 @@ function PMA_syncUniqueColumns($field_select, $isTable=true, $table=null)
             }
         }
     } else {
-        if ($table == null) {
+        if ($table === null) {
             $table = $_REQUEST['table'];
         }
         foreach ($field_select as $column) {
@@ -682,13 +682,14 @@ function PMA_getCentralColumnsTableHeader($class='', $title='', $actionCount=0)
 {
     $action = '';
     if ($actionCount > 0) {
-        $action .= '<th colspan="' . $actionCount . '">' . __('Action') . '</th>';
+        $action .= '<th class="column_action" colspan="' . $actionCount . '">'
+            . __('Action') . '</th>';
     }
     $tableheader = '<thead>';
     $tableheader .= '<tr>'
         . '<th class="' . $class . '"></th>'
-        . $action
         . '<th class="" style="display:none"></th>'
+        . $action
         . '<th class="' . $class . '" title="' . $title . '" data-column="name">'
         . __('Name') . '<div class="sorticon"></div></th>'
         . '<th class="' . $class . '" title="' . $title . '" data-column="type">'
@@ -974,7 +975,7 @@ function PMA_getHTMLforCentralColumnsEditTableRow($row, $odd_row, $row_num)
         $meta['DefaultType'] = 'NONE';
     } else {
         if ($row['col_default'] == 'CURRENT_TIMESTAMP'
-                || $row['col_default'] == 'NULL'
+            || $row['col_default'] == 'NULL'
         ) {
             $meta['DefaultType'] = $row['col_default'];
         } else {
@@ -985,7 +986,7 @@ function PMA_getHTMLforCentralColumnsEditTableRow($row, $odd_row, $row_num)
     $tableHtml .=
         '<td class="nowrap" name="col_default">'
         . PMA_getHtmlForColumnDefault(
-                $row_num, 3, 0, /*overload*/mb_strtoupper($row['col_default']), '', $meta
+            $row_num, 3, 0, /*overload*/mb_strtoupper($row['col_default']), '', $meta
         )
         . '</td>';
     $tableHtml .=
@@ -1005,7 +1006,7 @@ function PMA_getHTMLforCentralColumnsEditTableRow($row, $odd_row, $row_num)
         '<td class="nowrap" name="col_isNull">'
         . PMA_getHtmlForColumnNull($row_num, 6, 0, array('Null'=>$row['col_isNull']))
         . '</td>';
-    $extra_val = $row['col_extra'];
+
     $tableHtml .=
         '<td class="nowrap" name="col_extra">'
         . PMA_getHtmlForColumnExtra(

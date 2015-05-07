@@ -215,7 +215,11 @@ function PMA_getHtmlForColumnElement($cssClass, $isSelected, $keyname,
     $description, $title
 ) {
     $keyname = htmlspecialchars($keyname);
-    $output = '<td ' . $cssClass . '>'
+    $output = '<td';
+    if (! empty($cssClass)) {
+        $output .= ' ' . $cssClass;
+    }
+    $output .= '>'
         . ($isSelected ? '<strong>' : '')
         . '<a class="foreign_value" data-key="' . $keyname . '" '
         . 'href="#" title="' . __('Use this value')
@@ -309,4 +313,3 @@ function PMA_getForeignLimit($foreign_showAll)
     isset($_REQUEST['pos']) ? $pos = $_REQUEST['pos'] : $pos = 0;
     return 'LIMIT ' . $pos . ', ' . $GLOBALS['cfg']['MaxRows'] . ' ';
 }
-?>

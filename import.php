@@ -76,6 +76,7 @@ $post_params = array(
     'MAX_FILE_SIZE',
     'message_to_show',
     'noplugin',
+    'skip',
     'skip_queries',
     'local_import_file'
 );
@@ -102,6 +103,27 @@ if (!isset($_SESSION['is_multi_query'])) {
 // Are we just executing plain query or sql file?
 // (eg. non import, but query box/window run)
 if (! empty($sql_query)) {
+
+    // apply values for parameters
+    if (! empty($_REQUEST['parameterized'])) {
+        $parameters = $_REQUEST['parameters'];
+        foreach ($parameters as $parameter => $replacement) {
+            $quoted = preg_quote($parameter);
+            // making sure that :param does not apply values to :param1
+            $sql_query = preg_replace(
+                '/' . $quoted . '([^a-zA-Z0-9_])/',
+                PMA_Util::sqlAddSlashes($replacement) . '${1}',
+                $sql_query
+            );
+            // for parameters the appear at the end of the string
+            $sql_query = preg_replace(
+                '/' . $quoted . '$/',
+                PMA_Util::sqlAddSlashes($replacement),
+                $sql_query
+            );
+        }
+    }
+
     // run SQL query
     $import_text = $sql_query;
     $import_type = 'query';
@@ -310,9 +332,7 @@ if (! empty($_REQUEST['id_bookmark'])) {
             isset($_REQUEST['action_bookmark_all'])
         );
         if (! empty($_REQUEST['bookmark_variable'])) {
-            $import_text = preg_replace(
-                '|/\*(.*)\[VARIABLE\](.*)\*/|imsU',
-                '${1}' . PMA_Util::sqlAddSlashes($_REQUEST['bookmark_variable']) . '${2}',
+            $import_text = PMA_Bookmark_applyVariables(
                 $import_text
             );
         }
@@ -677,12 +697,19 @@ if (! empty($id_bookmark) && $_REQUEST['action_bookmark'] == 2) {
 
 // Did we hit timeout? Tell it user.
 if ($timeout_passed) {
+    $importUrl = $err_url .= '&timeout_passed=1&offset=' . urlencode($GLOBALS['offset']);
+    if (isset($local_import_file)) {
+        $importUrl .= '&local_import_file=' . urlencode($local_import_file);
+    }
     $message = PMA_Message::error(
         __(
             'Script timeout passed, if you want to finish import,'
-            . ' please resubmit same file and import will resume.'
+            . ' please %sresubmit the same file%s and import will resume.'
         )
     );
+    $message->addParam('<a href="' . $importUrl . '">', false);
+    $message->addParam('</a>', false);
+
     if ($offset == 0 || (isset($original_skip) && $original_skip == $offset)) {
         $message->addString(
             __(
@@ -781,4 +808,3 @@ if ($go_sql) {
 if (isset($_REQUEST['rollback_query'])) {
     $GLOBALS['dbi']->query('ROLLBACK');
 }
-?>

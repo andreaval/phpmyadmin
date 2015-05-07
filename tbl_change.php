@@ -77,6 +77,8 @@ $scripts->addFile('sql.js');
 $scripts->addFile('tbl_change.js');
 $scripts->addFile('big_ints.js');
 $scripts->addFile('jquery/jquery-ui-timepicker-addon.js');
+$scripts->addFile('jquery/jquery.validate.js');
+$scripts->addFile('jquery/additional-methods.js');
 $scripts->addFile('gis_data_editor.js');
 
 /**
@@ -229,4 +231,3 @@ if ($insert_mode) {
 }
 
 $response->addHTML($html_output);
-?>
